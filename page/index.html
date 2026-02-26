@@ -106,7 +106,7 @@
 
     <section id="quickstart" class="doc-section mb-16">
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Quick Start</h2>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Minimal (new project):</strong> Only <code>wely.config.ts</code> + <code>wely</code> — no vite.config, no extra deps.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Minimal (new project):</strong> Only <code>wely.config.ts</code> + <code>welyjs</code> — no vite.config, no extra deps.</p>
       <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto mb-4"><code class="language-bash">mkdir my-app &amp;&amp; cd my-app
 wely init
 npm install
@@ -124,7 +124,7 @@ npm run test:run</code></pre>
     <section id="define" class="doc-section mb-16">
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Defining a Component</h2>
       <p class="text-zinc-600 dark:text-zinc-400 mb-4">Every component is a plain object passed to <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">defineComponent()</code>:</p>
-      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-javascript">import { defineComponent, html } from 'wely'
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-javascript">import { defineComponent, html } from 'welyjs'
 
 defineComponent({
   tag: 'w-counter',
@@ -264,7 +264,7 @@ wely page                    # → docs/</code></pre>
           </tbody>
         </table>
       </div>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Bundle: drop-in script. Library: <code>import { defineComponent, html } from 'wely'</code>.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Bundle: drop-in script. Library: <code>import { defineComponent, html } from 'welyjs'</code>.</p>
     </section>
 
     <section id="styling" class="doc-section mb-16">

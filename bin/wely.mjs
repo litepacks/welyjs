@@ -79,7 +79,7 @@ function ensureConsumerFiles() {
  * Bundle entry — exports wely API + registers your components.
  * Built with \`wely build\` to produce a single file you can drop into any page.
  */
-export * from 'wely'
+export * from 'welyjs'
 import './components'
 `)
     created.push('src/bundle.ts')
@@ -102,7 +102,7 @@ function init() {
 
   const welyConfigPath = join(ROOT, 'wely.config.ts')
   if (!existsSync(welyConfigPath)) {
-    const config = `import { defineConfig } from 'wely'
+    const config = `import { defineConfig } from 'welyjs'
 
 export default defineConfig({
   appName: 'My App',
@@ -119,18 +119,18 @@ export default defineConfig({
       version: '0.0.1',
       type: 'module',
       scripts: { dev: 'vite', build: 'vite build' },
-      dependencies: { wely: '^0.1.0' },
+      dependencies: { welyjs: '^0.1.0' },
     }
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
     created.push('package.json')
   } else {
     try {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-      if (!pkg.dependencies?.wely) {
+      if (!pkg.dependencies?.welyjs) {
         pkg.dependencies = pkg.dependencies ?? {}
-        pkg.dependencies.wely = pkg.dependencies.wely ?? '^0.1.0'
+        pkg.dependencies.welyjs = pkg.dependencies.welyjs ?? '^0.1.0'
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
-        created.push('package.json (added wely)')
+        created.push('package.json (added welyjs)')
       }
     } catch (_) {}
   }
@@ -520,7 +520,7 @@ function generateComponent(tag, propsInput, actionsInput) {
   lines.push(` */`)
   lines.push(``)
 
-  const runtimeImport = existsSync(join(ROOT, 'src', 'runtime')) ? "'../runtime'" : "'wely'"
+  const runtimeImport = existsSync(join(ROOT, 'src', 'runtime')) ? "'../runtime'" : "'welyjs'"
   lines.push(`import { defineComponent, html } from ${runtimeImport}`)
   lines.push(``)
   lines.push(`defineComponent({`)

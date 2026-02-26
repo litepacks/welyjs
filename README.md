@@ -80,11 +80,11 @@ The same component works in all of these without modification.
 
 ### Minimal setup (new project)
 
-Add **only** `wely.config.ts` and `wely` as a dependency. No vite.config, no extra devDependencies — Wely brings them.
+Add **only** `wely.config.ts` and `welyjs` as a dependency. No vite.config, no extra devDependencies — Wely brings them.
 
 ```bash
 mkdir my-app && cd my-app
-wely init                    # creates wely.config.ts + package.json with wely
+wely init                    # creates wely.config.ts + package.json with welyjs
 npm install
 wely create w-hello --props msg:String
 wely build                   # → dist/wely.bundle.es.js, dist/wely.bundle.umd.js
@@ -108,7 +108,7 @@ npm run test:run # single run
 Every component is a plain object passed to `defineComponent()`:
 
 ```ts
-import { defineComponent, html } from 'wely'
+import { defineComponent, html } from 'welyjs'
 
 defineComponent({
   tag: 'w-counter',
@@ -267,7 +267,7 @@ Every lifecycle and render function receives a context object:
 Zero-dependency HTTP client built on native `fetch`, with an Axios-like API:
 
 ```ts
-import { createClient } from 'wely'
+import { createClient } from 'welyjs'
 
 const api = createClient({
   baseURL: 'https://api.example.com',
@@ -304,7 +304,7 @@ Features: automatic JSON serialization/parsing, query params, timeout via `Abort
 Async data primitive that tracks `loading`, `error`, and `data` states. Integrates with the component lifecycle via `ctx.resource()` — auto re-renders and auto-aborts on disconnect.
 
 ```ts
-import { defineComponent, html, createClient } from 'wely'
+import { defineComponent, html, createClient } from 'welyjs'
 
 const api = createClient({ baseURL: 'https://api.example.com' })
 
@@ -351,7 +351,7 @@ defineComponent({
 Shared reactive state for cross-component communication. State mutations are batched inside actions — subscribers are notified once per action.
 
 ```ts
-import { createStore } from 'wely'
+import { createStore } from 'welyjs'
 
 export const authStore = createStore({
   state: () => ({
@@ -447,7 +447,7 @@ defineComponent({
 **Reading config outside components:**
 
 ```ts
-import { getConfig, useConfig } from 'wely'
+import { getConfig, useConfig } from 'welyjs'
 
 const cfg = getConfig()             // full config object
 const apiURL = useConfig('apiURL')  // single key
@@ -457,7 +457,7 @@ const theme = useConfig('theme', 'light')  // with fallback
 ### Registry Utilities
 
 ```ts
-import { getComponent, getAllComponents } from 'wely'
+import { getComponent, getAllComponents } from 'welyjs'
 
 getComponent('w-counter')   // ComponentDef | undefined
 getAllComponents()           // Map<string, ComponentDef>
@@ -466,7 +466,7 @@ getAllComponents()           // Map<string, ComponentDef>
 ### Re-exported from Lit
 
 ```ts
-import { html, css, nothing } from 'wely'
+import { html, css, nothing } from 'welyjs'
 ```
 
 These are the only Lit symbols exposed. `LitElement` and all other internals remain hidden.
@@ -589,7 +589,7 @@ Tailwind CSS v4 is integrated at two levels:
 Components also accept a `styles` field for scoped CSS using Lit's `css` helper:
 
 ```ts
-import { defineComponent, html, css } from 'wely'
+import { defineComponent, html, css } from 'welyjs'
 
 defineComponent({
   tag: 'w-card',
@@ -616,12 +616,12 @@ Example `src/styles/tailwind.css` (adjust `@source` if components live elsewhere
 
 ## CLI
 
-Wely CLI runs in the **current working directory** — use it from any project that has Wely installed. New projects need only `wely` as a dependency; Vite and Tailwind come with it.
+Wely CLI runs in the **current working directory** — use it from any project that has Wely installed. New projects need only `welyjs` as a dependency; Vite and Tailwind come with it.
 
 ### Project setup
 
 ```bash
-# Minimal: creates wely.config.ts + package.json with wely
+# Minimal: creates wely.config.ts + package.json with welyjs
 wely init
 npm install
 ```
