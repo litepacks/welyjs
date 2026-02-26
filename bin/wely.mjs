@@ -119,7 +119,7 @@ export default defineConfig({
       version: '0.0.1',
       type: 'module',
       scripts: { dev: 'vite', build: 'vite build' },
-      dependencies: { welyjs: '^0.1.0' },
+      dependencies: { welyjs: '^0.0.2' },
     }
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
     created.push('package.json')
@@ -128,7 +128,7 @@ export default defineConfig({
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
       if (!pkg.dependencies?.welyjs) {
         pkg.dependencies = pkg.dependencies ?? {}
-        pkg.dependencies.welyjs = pkg.dependencies.welyjs ?? '^0.1.0'
+        pkg.dependencies.welyjs = pkg.dependencies.welyjs ?? '^0.0.2'
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
         created.push('package.json (added welyjs)')
       }

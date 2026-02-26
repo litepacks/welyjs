@@ -2,11 +2,15 @@
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
+import dts from 'vite-plugin-dts'
 
 const isBundle = process.env.WELY_BUILD_MODE === 'bundle'
 
 export default defineConfig({
-  plugins: [tailwindcss()],
+  plugins: [
+    tailwindcss(),
+    !isBundle && dts({ rollupTypes: true, outDir: 'dist', exclude: ['**/__tests__/**', '**/*.test.ts'] }),
+  ].filter(Boolean),
   build: {
     target: ['chrome73', 'firefox101', 'safari16.4', 'edge79'],
     lib: isBundle
