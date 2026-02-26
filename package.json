@@ -1,0 +1,53 @@
+{
+  "name": "wely",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Lightweight Web Component framework powered by a single defineComponent() factory",
+  "main": "./dist/wely.umd.js",
+  "module": "./dist/wely.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/wely.es.js",
+      "require": "./dist/wely.umd.js"
+    },
+    "./bundle": {
+      "import": "./dist/wely.bundle.es.js",
+      "require": "./dist/wely.bundle.umd.js"
+    }
+  },
+  "bin": {
+    "wely": "./bin/wely.mjs"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "wely": "node bin/wely.mjs"
+  },
+  "browserslist": [
+    "Chrome >= 73",
+    "Firefox >= 101",
+    "Safari >= 16.4",
+    "Edge >= 79"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "dayjs": "^1.11.19",
+    "lit": "^3.3.2",
+    "tailwindcss": "^4.2.1"
+  },
+  "devDependencies": {
+    "jsdom": "^28.1.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}

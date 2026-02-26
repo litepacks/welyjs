@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wely Playground</title>
+</head>
+<body class="bg-zinc-50 text-zinc-900 antialiased">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+    <h1 class="text-2xl font-bold">Wely <span class="font-light text-zinc-400">playground</span></h1>
+    <p class="text-zinc-500 mt-1 mb-8">Test registered w-* components below.</p>
+
+    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
+      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-counter&gt;</h2>
+      <div class="flex items-center gap-4 flex-wrap">
+        <w-counter start="5"></w-counter>
+      </div>
+      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-counter start="5"&gt;&lt;/w-counter&gt;</pre>
+    </section>
+
+    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
+      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-counter&gt; (default)</h2>
+      <div class="flex items-center gap-4 flex-wrap">
+        <w-counter></w-counter>
+      </div>
+      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-counter&gt;&lt;/w-counter&gt;</pre>
+    </section>
+
+    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
+      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-button&gt;</h2>
+      <div class="flex items-center gap-4 flex-wrap">
+        <w-button label="Default"></w-button>
+        <w-button label="Primary" variant="primary"></w-button>
+        <w-button label="Danger" variant="danger"></w-button>
+        <w-button label="Ghost" variant="ghost"></w-button>
+        <w-button label="Disabled" disabled></w-button>
+      </div>
+      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-button label="Default"&gt;&lt;/w-button&gt;
+&lt;w-button label="Primary" variant="primary"&gt;&lt;/w-button&gt;
+&lt;w-button label="Danger" variant="danger"&gt;&lt;/w-button&gt;
+&lt;w-button label="Ghost" variant="ghost"&gt;&lt;/w-button&gt;
+&lt;w-button label="Disabled" disabled&gt;&lt;/w-button&gt;</pre>
+    </section>
+
+    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
+      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-button&gt; with slot</h2>
+      <div class="flex items-center gap-4 flex-wrap">
+        <w-button>Slotted content</w-button>
+      </div>
+      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-button&gt;Slotted content&lt;/w-button&gt;</pre>
+    </section>
+
+    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
+      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-counter-card&gt; (composed component)</h2>
+      <div class="flex items-center gap-4 flex-wrap">
+        <w-counter-card title="Score" start="10"></w-counter-card>
+        <w-counter-card title="Lives" start="3"></w-counter-card>
+      </div>
+      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-counter-card title="Score" start="10"&gt;&lt;/w-counter-card&gt;
+&lt;w-counter-card title="Lives" start="3"&gt;&lt;/w-counter-card&gt;</pre>
+    </section>
+
+    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
+      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-user-list&gt; (async resource + shared store)</h2>
+      <w-user-list endpoint="https://jsonplaceholder.typicode.com/users"></w-user-list>
+      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-user-list endpoint="https://jsonplaceholder.typicode.com/users"&gt;&lt;/w-user-list&gt;</pre>
+    </section>
+  </div>
+
+  <script type="module" src="/src/playground/main.ts"></script>
+</body>
+</html>

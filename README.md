@@ -1,0 +1,731 @@
+# Wely
+
+A lightweight Web Component framework built on a single `defineComponent()` factory function. No class syntax, no framework lock-in — just plain config objects that produce native custom elements.
+
+Lit powers the rendering engine internally but is never exposed to consumers. Developers interact exclusively through the Wely API.
+
+## Why Wely?
+
+Building frontend components today typically means choosing a heavy framework, wiring up a dozen separate tools, and learning framework-specific abstractions. Wely replaces that entire workflow with a single unified toolkit.
+
+### The problem
+
+1. **Too many moving parts.** A typical component project requires a framework (React, Vue, Svelte), a bundler, a test runner, a dev server, a CSS pipeline, and an HTTP client — each with its own config file and mental model.
+2. **Framework lock-in.** Components written for one framework cannot be dropped into another. Migrating means rewriting.
+3. **Boilerplate overhead.** Class-based or hook-based patterns demand ceremony that gets in the way, especially when generating code with LLM tools.
+4. **No single source of truth.** Build, test, preview, scaffold, and export are spread across unrelated scripts with no shared conventions.
+5. **Documentation falls behind.** Components grow but their docs don't — prop types, actions, and usage examples live only in developers' heads.
+
+### How Wely solves it
+
+| Step | What you do | What Wely handles |
+|---|---|---|
+| **Configure** | Edit `wely.config.ts` and `.env` | Centralized, env-aware config accessible everywhere via `ctx.config` |
+| **Create** | `wely create w-card --props title:String` | Scaffolds a ready-to-use component file and updates the barrel index |
+| **Develop** | `wely dev` | Launches a hot-reloading playground where every component is instantly testable |
+| **Style** | Use Tailwind classes directly in templates | Tailwind CSS is compiled and injected into Shadow DOM automatically |
+| **Fetch data** | `createClient({ baseURL })` | Built-in HTTP client with interceptors, timeout, and typed responses |
+| **Manage state** | `ctx.resource()` / `ctx.use(store)` | Async resources + shared stores with auto re-render, abort, and batching |
+| **Test** | `wely test` | Vitest runs against real DOM with zero extra config (same `vite.config.ts`) |
+| **Build** | `wely build` | Produces ES + UMD bundles — standard Web Components usable anywhere |
+| **Export** | `wely export ../other-project/lib` | Copies the built output directly into any project folder |
+| **Document** | `wely docs` | Parses component source files and generates a complete `COMPONENTS.md` reference |
+
+The entire lifecycle — from scaffolding a component to shipping it into production — happens through one CLI and one config file.
+
+### What comes out
+
+The output is **native custom elements**. No virtual DOM, no framework runtime at the consumer side. The components work in plain HTML, inside React, Vue, Angular, Svelte, or any other environment that supports the DOM.
+
+```html
+<!-- works anywhere -->
+<script src="wely.umd.js"></script>
+<w-counter start="5"></w-counter>
+```
+
+## Quick Start
+
+```bash
+npm install
+npm run dev      # playground at localhost:5173
+npm run build    # library → dist/wely.es.js + dist/wely.umd.js
+npm run test     # vitest in watch mode
+npm run test:run # single run
+```
+
+## Defining a Component
+
+Every component is a plain object passed to `defineComponent()`:
+
+```ts
+import { defineComponent, html } from 'wely'
+
+defineComponent({
+  tag: 'w-counter',
+
+  props: { start: Number },
+
+  state() {
+    return { count: 0 }
+  },
+
+  setup(ctx) {
+    ctx.state.count = ctx.props.start ?? 0
+  },
+
+  actions: {
+    increment(ctx) { ctx.state.count++ },
+    decrement(ctx) { ctx.state.count-- },
+    reset(ctx)     { ctx.state.count = ctx.props.start ?? 0 },
+  },
+
+  render(ctx) {
+    return html`
+      <button @click=${ctx.actions.decrement}>-</button>
+      <span>${ctx.state.count}</span>
+      <button @click=${ctx.actions.increment}>+</button>
+      <button @click=${ctx.actions.reset}>Reset</button>
+    `
+  },
+})
+```
+
+Then use it anywhere:
+
+```html
+<w-counter start="5"></w-counter>
+```
+
+## Component Composition
+
+Wely components are **native Custom Elements** — they can be nested inside each other with zero ceremony. Just use the tag name in any template:
+
+```ts
+defineComponent({
+  tag: 'w-counter-card',
+  props: { title: String, start: Number },
+  state() { return { lastEvent: '' } },
+  actions: {
+    onCounterClick(ctx) {
+      ctx.state.lastEvent = `Clicked at ${new Date().toLocaleTimeString()}`
+    },
+  },
+  render(ctx) {
+    return html`
+      <div class="border rounded-lg p-4 space-y-3">
+        <h3>${ctx.props.title}</h3>
+        <!-- Child components — just use the tag -->
+        <w-counter start=${ctx.props.start ?? 0}></w-counter>
+        <w-button label="Action" variant="primary" @w-click=${ctx.actions.onCounterClick}></w-button>
+        ${ctx.state.lastEvent ? html`<p>${ctx.state.lastEvent}</p>` : ''}
+      </div>
+    `
+  },
+})
+```
+
+```html
+<w-counter-card title="Score" start="10"></w-counter-card>
+```
+
+### How it works
+
+| Concept | Mechanism |
+|---|---|
+| **Nesting** | Any `<w-*>` tag in a template is resolved by the browser's Custom Elements registry — no import needed |
+| **Parent → Child data** | Pass data through HTML attributes / properties: `start=${ctx.props.start}` |
+| **Child → Parent events** | Children call `ctx.emit('event-name', payload)`, parents listen with `@event-name=${handler}` |
+| **Shared state** | Use `createStore()` + `ctx.use(store)` for state that spans multiple components |
+| **Slot projection** | Use `<slot>` to project parent-provided content into a child's Shadow DOM |
+
+### Communication patterns
+
+```
+┌─────────────────────────────┐
+│  w-counter-card (parent)    │
+│                             │
+│  ┌───────────┐ ┌─────────┐ │
+│  │ w-counter │ │w-button  │ │
+│  └─────┬─────┘ └────┬────┘ │
+│    props↓        emit↑      │
+│   start="10"  @w-click=fn   │
+└─────────────────────────────┘
+
+props  → parent to child (attributes)
+emit   → child to parent (CustomEvent)
+store  → any to any (shared state)
+```
+
+### External npm packages
+
+Component files can import and use any npm dependency. Vite bundles them into the build output:
+
+```ts
+import dayjs from 'dayjs'
+import { defineComponent, html } from '../runtime'
+
+defineComponent({
+  tag: 'w-counter-card',
+  // ...
+  actions: {
+    onCounterClick(ctx) {
+      ctx.state.lastEvent = `Clicked at ${dayjs().format('HH:mm:ss')}`
+    },
+  },
+  // ...
+})
+```
+
+Run `wely build --bundle` (or `--all`) so that components and their dependencies are included in `wely.bundle.*.js`. Library-only build (`wely build`) does not include component code, so external packages used only in components appear only in the bundle output.
+
+## API Surface
+
+### `defineComponent(def)`
+
+Registers a native custom element. Accepts a `ComponentDef` object:
+
+| Field | Type | Description |
+|---|---|---|
+| `tag` | `string` | Custom element tag name (must contain a hyphen) |
+| `props` | `Record<string, PropType>` | Attribute-synced properties (`String`, `Number`, `Boolean`, `Array`, `Object`) |
+| `styles` | `CSSResult \| CSSResult[]` | Component-scoped styles via Lit's `css` helper |
+| `state()` | `() => S` | Factory that returns initial reactive state |
+| `actions` | `Record<string, (ctx) => void>` | Named action handlers, available as `ctx.actions.*` |
+| `setup(ctx)` | `(ctx) => void` | Called once when the element first connects |
+| `render(ctx)` | `(ctx) => TemplateResult` | Returns the template (uses `html` tagged literal) |
+| `connected(ctx)` | `(ctx) => void` | Called on every `connectedCallback` |
+| `disconnected(ctx)` | `(ctx) => void` | Called on every `disconnectedCallback` |
+
+### The `ctx` Object
+
+Every lifecycle and render function receives a context object:
+
+| Property | Description |
+|---|---|
+| `ctx.el` | Reference to the host `HTMLElement` |
+| `ctx.props` | Readonly proxy to attribute-synced properties |
+| `ctx.state` | Auto-reactive state — mutations trigger re-render automatically |
+| `ctx.actions` | Bound action map from the component definition |
+| `ctx.update()` | Manually request a re-render (optional, state is already reactive) |
+| `ctx.emit(event, payload?)` | Dispatch a `CustomEvent` with `bubbles` and `composed` |
+| `ctx.resource(fetcher, opts?)` | Create an async resource bound to the component lifecycle |
+| `ctx.use(store)` | Subscribe to a shared store — auto-unsubscribes on disconnect |
+| `ctx.config` | Read-only project-wide config from `wely.config.ts` |
+
+### `createClient(config?)`
+
+Zero-dependency HTTP client built on native `fetch`, with an Axios-like API:
+
+```ts
+import { createClient } from 'wely'
+
+const api = createClient({
+  baseURL: 'https://api.example.com',
+  headers: { Authorization: 'Bearer token' },
+  timeout: 5000,
+})
+
+const { data } = await api.get<User[]>('/users', { params: { page: 1 } })
+await api.post<User>('/users', { name: 'Ali' })
+await api.put('/users/1', { name: 'Veli' })
+await api.patch('/users/1', { role: 'admin' })
+await api.delete('/users/1')
+```
+
+**Interceptors:**
+
+```ts
+api.onRequest((_url, init) => {
+  ;(init.headers as Record<string, string>)['X-Request-Id'] = crypto.randomUUID()
+  return init
+})
+
+api.onResponse((res) => { console.log(res.status); return res })
+
+api.onError((err) => {
+  if (err.status === 401) redirectToLogin()
+})
+```
+
+Features: automatic JSON serialization/parsing, query params, timeout via `AbortController`, `ApiError` class with status/data, FormData support, full TypeScript generics.
+
+### `createResource(fetcher, options?)`
+
+Async data primitive that tracks `loading`, `error`, and `data` states. Integrates with the component lifecycle via `ctx.resource()` — auto re-renders and auto-aborts on disconnect.
+
+```ts
+import { defineComponent, html, createClient } from 'wely'
+
+const api = createClient({ baseURL: 'https://api.example.com' })
+
+defineComponent({
+  tag: 'w-users',
+  setup(ctx) {
+    const users = ctx.resource(
+      (signal) => api.get<User[]>('/users', { signal }).then(r => r.data),
+      { immediate: true },
+    )
+
+    ctx.state.users = users
+  },
+  render(ctx) {
+    const { loading, error, data } = ctx.state.users
+
+    if (loading) return html`<p>Loading…</p>`
+    if (error)   return html`<p>Error: ${error.message}</p>`
+
+    return html`
+      <ul>
+        ${data?.map(u => html`<li>${u.name}</li>`)}
+      </ul>
+    `
+  },
+})
+```
+
+**Resource API:**
+
+| Method / Property | Description |
+|---|---|
+| `data` | Resolved value, or `undefined` |
+| `loading` | `true` while in-flight |
+| `error` | `Error` from last failure |
+| `fetch()` / `refetch()` | Trigger or re-trigger the fetcher |
+| `abort()` | Cancel in-flight request |
+| `mutate(value)` | Replace data manually |
+| `reset()` | Clear all state |
+| `subscribe(fn)` | Listen to changes (returns unsubscribe) |
+
+### `createStore(def)`
+
+Shared reactive state for cross-component communication. State mutations are batched inside actions — subscribers are notified once per action.
+
+```ts
+import { createStore } from 'wely'
+
+export const authStore = createStore({
+  state: () => ({
+    user: null as User | null,
+    token: '',
+  }),
+  actions: {
+    login(state, user: User, token: string) {
+      state.user = user
+      state.token = token
+    },
+    logout(state) {
+      state.user = null
+      state.token = ''
+    },
+  },
+})
+```
+
+**Using a store in a component** — `ctx.use()` subscribes automatically and unsubscribes on disconnect:
+
+```ts
+defineComponent({
+  tag: 'w-header',
+  setup(ctx) {
+    const auth = ctx.use(authStore)
+    ctx.state.auth = auth
+  },
+  render(ctx) {
+    const user = ctx.state.auth.state.user
+    return html`<nav>${user ? html`Hi, ${user.name}` : html`<a href="/login">Sign in</a>`}</nav>`
+  },
+})
+```
+
+**Store API:**
+
+| Method / Property | Description |
+|---|---|
+| `state` | Reactive state object (reads always current) |
+| `actions` | Bound action functions (no `state` param needed) |
+| `subscribe(fn)` | Listen to changes (returns unsubscribe) |
+| `reset()` | Restore initial state |
+
+### Configuration (`wely.config.ts`)
+
+Define project-wide settings in a single config file at the project root. Values can be hardcoded or pulled from environment variables via Vite's `import.meta.env`.
+
+```ts
+// wely.config.ts
+import { defineConfig } from './src/runtime'
+
+export default defineConfig({
+  appName: 'My App',
+  apiURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000',
+  debug: import.meta.env.DEV,
+  theme: import.meta.env.VITE_THEME ?? 'light',
+})
+```
+
+Environment variables go in `.env` (Vite convention — only `VITE_` prefixed variables are exposed):
+
+```bash
+# .env
+VITE_API_URL=https://api.production.com
+VITE_THEME=dark
+```
+
+The config must be imported before any component renders (typically in your entry file):
+
+```ts
+// main.ts
+import '../wely.config'
+import './components'
+```
+
+**Reading config inside components** — every `ctx` has a `config` property:
+
+```ts
+defineComponent({
+  tag: 'w-api-status',
+  state: () => ({ status: '' }),
+  async setup(ctx) {
+    const res = await fetch(ctx.config.apiURL + '/health')
+    ctx.state.status = res.ok ? 'up' : 'down'
+  },
+  render(ctx) {
+    return html`<span>API: ${ctx.state.status}</span>`
+  },
+})
+```
+
+**Reading config outside components:**
+
+```ts
+import { getConfig, useConfig } from 'wely'
+
+const cfg = getConfig()             // full config object
+const apiURL = useConfig('apiURL')  // single key
+const theme = useConfig('theme', 'light')  // with fallback
+```
+
+### Registry Utilities
+
+```ts
+import { getComponent, getAllComponents } from 'wely'
+
+getComponent('w-counter')   // ComponentDef | undefined
+getAllComponents()           // Map<string, ComponentDef>
+```
+
+### Re-exported from Lit
+
+```ts
+import { html, css, nothing } from 'wely'
+```
+
+These are the only Lit symbols exposed. `LitElement` and all other internals remain hidden.
+
+## Project Structure
+
+```
+src/
+  runtime/
+    defineComponent.ts    Core factory
+    config.ts             Global config store
+    registry.ts           Tag → definition map
+    fetch.ts              HTTP client
+    resource.ts           Async data primitive (createResource)
+    store.ts              Shared reactive state (createStore)
+    shared-styles.ts      Tailwind → Shadow DOM bridge
+    types.ts              Public type definitions
+    index.ts              Barrel export
+  bundle.ts               Bundle entry (runtime + components)
+  components/
+    w-counter.ts          Example counter
+    w-button.ts           Example button with variants
+    w-counter-card.ts     Example composed component (nesting)
+    w-user-list.ts        Example async data + shared store
+    index.ts
+  styles/
+    tailwind.css          Tailwind entry
+  playground/
+    main.ts               Dev playground entry
+index.html                Playground page
+wely.config.ts            App-level config (env-aware)
+vite.config.ts            Vite + Vitest (single config)
+.env                      Environment variables
+```
+
+## Self Documentation
+
+Wely promotes self-documenting code at every layer:
+
+### 1. JSDoc on Public API
+
+All public types, interfaces, and functions ship with JSDoc comments. Hover over `defineComponent`, `ComponentContext`, `createClient`, `defineConfig`, etc. in any IDE to see inline documentation with examples:
+
+```ts
+// IDE will show: "Set the project-wide configuration…"
+defineConfig({ apiURL: '...' })
+
+// IDE will show: "Create a configured HTTP client…"
+const api = createClient({ baseURL: '...' })
+```
+
+### 2. Self-Documenting Component Files
+
+`wely create` generates components with structured section headers:
+
+```ts
+/**
+ * <w-card>
+ *
+ * @prop {String} title
+ *
+ * @example
+ * ```html
+ * <w-card title="..."></w-card>
+ * ```
+ */
+
+defineComponent({
+  // ── Tag ────────────────────────────────────────────────
+  tag: 'w-card',
+
+  // ── Props ───────────────────────────────────────────────
+  // Synced from HTML attributes. Available as ctx.props.*
+  props: { title: String },
+
+  // ── State ───────────────────────────────────────────────
+  // Reactive — mutations auto-trigger re-render
+  state() { return {} },
+
+  // ── Actions ────────────────────────────────────────────
+  // Named handlers. Use in templates as ctx.actions.*
+  actions: { ... },
+
+  // ── Render ──────────────────────────────────────────────
+  // Return the template. Tailwind classes work in Shadow DOM.
+  render(ctx) { ... },
+})
+```
+
+Each section clearly communicates its purpose so anyone (human or LLM) reading the file can understand the component at a glance.
+
+### 3. Auto-Generated Component Reference
+
+Run `wely docs` to scan all component files and produce a `COMPONENTS.md` with a summary table, prop types, actions, and usage examples:
+
+```bash
+wely docs
+# → COMPONENTS.md
+
+wely docs --out docs/components.md
+# → custom output path
+```
+
+Example output:
+
+```md
+| Tag | Props | Actions | File |
+|---|---|---|---|
+| `<w-button>` | `label`, `variant`, `disabled` | `handleClick` | `src/components/w-button.ts` |
+| `<w-counter>` | `start` | `increment`, `decrement`, `reset` | `src/components/w-counter.ts` |
+```
+
+## Styling
+
+Tailwind CSS v4 is integrated at two levels:
+
+1. **Playground / host page** — import `src/styles/tailwind.css` normally.
+2. **Inside Shadow DOM** — Tailwind is compiled to a constructable `CSSStyleSheet` and automatically adopted into every component's shadow root via `adoptedStyleSheets`. Utility classes work inside component templates out of the box.
+
+Components also accept a `styles` field for scoped CSS using Lit's `css` helper:
+
+```ts
+import { defineComponent, html, css } from 'wely'
+
+defineComponent({
+  tag: 'w-card',
+  styles: css`:host { display: block; padding: 1rem; }`,
+  render: () => html`<slot></slot>`,
+})
+```
+
+## CLI
+
+Wely ships a zero-dependency CLI for building and exporting the library.
+
+### Component Management
+
+```bash
+# Scaffold a new component
+wely create w-card
+
+# Scaffold with props and actions
+wely create w-user-list --props name:String,age:Number --actions refresh,delete
+
+# List all components
+wely list
+
+# Regenerate src/components/index.ts from existing files
+wely sync
+
+# Generate COMPONENTS.md from component source files
+wely docs
+
+# Generate docs to a custom path
+wely docs --out docs/api.md
+```
+
+`create` generates the file in `src/components/`, pre-filled with the `defineComponent` boilerplate, and auto-updates `index.ts`.
+
+`sync` scans the components directory and regenerates the barrel index so every `w-*.ts` file is imported automatically.
+
+### Build & Export
+
+Wely supports two build modes:
+
+| Mode | Command | Output | Use case |
+|---|---|---|---|
+| **Library** (default) | `wely build` | `wely.es.js` + `wely.umd.js` | Consumers import the runtime and write their own components |
+| **Bundle** | `wely build --bundle` | `wely.bundle.es.js` + `wely.bundle.umd.js` | All-in-one — runtime + registered components in a single file |
+| **All** | `wely build --all` | Both sets | Publish both variants |
+
+```bash
+# Library mode — runtime only
+wely build
+
+# Bundle mode — runtime + all components (nested components work out of the box)
+wely build --bundle
+
+# Both modes at once
+wely build --all
+
+# Build and copy output to another project
+wely build --all --export ../my-app/public/vendor/wely
+
+# Export to a target path (builds first by default)
+wely export ../my-app/public/vendor/wely
+
+# Export without rebuilding (uses existing dist/)
+wely export ./out --no-build
+
+# Clean target directory before exporting
+wely export ../my-app/lib/wely --clean
+```
+
+### Dev & Test
+
+```bash
+wely dev
+wely test
+wely test --run
+```
+
+Run via npm script:
+
+```bash
+npm run wely -- build
+npm run wely -- export ../other-project/vendor/wely
+```
+
+Or link globally:
+
+```bash
+npm link
+wely build --export ~/projects/my-app/public/vendor/wely
+```
+
+## Build Output
+
+```bash
+wely build --all
+# dist/wely.es.js          — ES module (runtime only)
+# dist/wely.umd.js         — UMD (runtime only, exposes window.Wely)
+# dist/wely.bundle.es.js   — ES module (runtime + components)
+# dist/wely.bundle.umd.js  — UMD (runtime + components)
+```
+
+**Library mode** — import the runtime and write your own components:
+
+```ts
+import { defineComponent, html } from './dist/wely.es.js'
+```
+
+**Bundle mode** — drop in a single file and use components immediately:
+
+```html
+<script src="wely.bundle.umd.js"></script>
+<w-counter start="5"></w-counter>
+<w-counter-card title="Score" start="10"></w-counter-card>
+```
+
+Or use the bundle entry via npm:
+
+```ts
+import 'wely/bundle'
+// All components are now registered and ready to use in HTML
+```
+
+## Browser Support
+
+Wely relies on Custom Elements v1, Shadow DOM, `adoptedStyleSheets`, and `Proxy`. The build target and `browserslist` in `package.json` are configured accordingly:
+
+| Browser | Minimum Version | Limiting API |
+|---|---|---|
+| Chrome | 73+ | `adoptedStyleSheets` |
+| Edge | 79+ | Chromium-based |
+| Firefox | 101+ | `adoptedStyleSheets` |
+| Safari | 16.4+ | `adoptedStyleSheets` |
+
+These targets are set in two places:
+
+- **`package.json`** → `browserslist` — consumed by Tailwind CSS and other PostCSS tools.
+- **`vite.config.ts`** → `build.target` — controls JavaScript syntax level in the Vite/Rollup output.
+
+To adjust browser support, edit both:
+
+```jsonc
+// package.json
+"browserslist": [
+  "Chrome >= 73",
+  "Firefox >= 101",
+  "Safari >= 16.4",
+  "Edge >= 79"
+]
+```
+
+```ts
+// vite.config.ts
+build: {
+  target: ['chrome73', 'firefox101', 'safari16.4', 'edge79'],
+}
+```
+
+## Design Principles
+
+- **Single factory** — every component is a `defineComponent()` call, no classes.
+- **LLM-friendly** — the `actions` pattern separates logic from templates so each section can be generated independently.
+- **Auto-reactive state** — state changes trigger re-renders via `Proxy`; no manual `update()` required.
+- **Zero lock-in** — output is native custom elements. Drop them into any framework or plain HTML.
+- **Minimal runtime** — the core factory is under 170 lines.
+
+## Future Roadmap
+
+- JSON-driven component rendering via the registry
+- Plugin hooks (before/after `defineComponent`)
+- Backend-driven UI composition
+- SSR hydration (via `@lit-labs/ssr`)
+- AI-generated component definitions
+
+## Tech Stack
+
+| Layer | Tool |
+|---|---|
+| Language | TypeScript |
+| Rendering | Lit (internal) |
+| Styling | Tailwind CSS v4 |
+| Dev / Build | Vite |
+| Testing | Vitest + jsdom |
+| Output | ES module + UMD |
+
+## License
+
+MIT
