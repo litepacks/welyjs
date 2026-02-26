@@ -3,16 +3,20 @@
 import { execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const ROOT = resolve(import.meta.dirname, '..')
+const ROOT = process.cwd()
+const WELY_PKG = resolve(fileURLToPath(import.meta.url), '..', '..')
 const DIST = join(ROOT, 'dist')
 const COMPONENTS_DIR = join(ROOT, 'src', 'components')
 
 const [, , command, ...args] = process.argv
 
 const commands = {
+  init,
   build,
   export: exportCmd,
+  page: pageCmd,
   create,
   sync,
   list,
@@ -38,23 +42,105 @@ handler()
 function build() {
   const flags = parseFlags(args)
   const isBundle = flags.bundle === true
+  const hasViteConfig = existsSync(join(ROOT, 'vite.config.ts')) || existsSync(join(ROOT, 'vite.config.js'))
 
-  if (isBundle) {
-    console.log('\n  Building wely (bundle mode — runtime + components)...\n')
-    run('npx vite build', { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
-  } else if (flags.all === true) {
-    console.log('\n  Building wely (all — library + bundle)...\n')
-    run('npx vite build')
-    run('npx vite build --emptyOutDir false', { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
+  if (hasViteConfig) {
+    if (isBundle) {
+      console.log('\n  Building (bundle — runtime + components)...\n')
+      run(getViteCmd('build'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
+    } else if (flags.all === true) {
+      console.log('\n  Building (all — library + bundle)...\n')
+      run(getViteCmd('build'))
+      run(getViteCmd('build --emptyOutDir false'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
+    } else {
+      console.log('\n  Building...\n')
+      run(getViteCmd('build'))
+    }
   } else {
-    console.log('\n  Building wely (library mode — runtime only)...\n')
-    run('npx vite build')
+    ensureConsumerFiles()
+    console.log('\n  Building bundle (runtime + components)...\n')
+    run(getViteCmd(`build --config ${join(WELY_PKG, 'vite.library.config.ts')}`))
   }
 
   printDist()
 
   if (flags.export) {
     copyTo(flags.export)
+  }
+}
+
+function ensureConsumerFiles() {
+  const created = []
+
+  const bundlePath = join(ROOT, 'src', 'bundle.ts')
+  if (!existsSync(bundlePath)) {
+    mkdirSync(join(ROOT, 'src'), { recursive: true })
+    writeFileSync(bundlePath, `/**
+ * Bundle entry — exports wely API + registers your components.
+ * Built with \`wely build\` to produce a single file you can drop into any page.
+ */
+export * from 'wely'
+import './components'
+`)
+    created.push('src/bundle.ts')
+  }
+
+  mkdirSync(join(ROOT, 'src', 'components'), { recursive: true })
+  const componentsIndexPath = join(ROOT, 'src', 'components', 'index.ts')
+  if (!existsSync(componentsIndexPath)) {
+    writeFileSync(componentsIndexPath, '// no components yet\n')
+    created.push('src/components/index.ts')
+  }
+
+  if (created.length > 0) {
+    console.log('  Created:', created.join(', '), '\n')
+  }
+}
+
+function init() {
+  const created = []
+
+  const welyConfigPath = join(ROOT, 'wely.config.ts')
+  if (!existsSync(welyConfigPath)) {
+    const config = `import { defineConfig } from 'wely'
+
+export default defineConfig({
+  appName: 'My App',
+})
+`
+    writeFileSync(welyConfigPath, config)
+    created.push('wely.config.ts')
+  }
+
+  const pkgPath = join(ROOT, 'package.json')
+  if (!existsSync(pkgPath)) {
+    const pkg = {
+      name: 'my-wely-app',
+      version: '0.0.1',
+      type: 'module',
+      scripts: { dev: 'vite', build: 'vite build' },
+      dependencies: { wely: '^0.1.0' },
+    }
+    writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
+    created.push('package.json')
+  } else {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+      if (!pkg.dependencies?.wely) {
+        pkg.dependencies = pkg.dependencies ?? {}
+        pkg.dependencies.wely = pkg.dependencies.wely ?? '^0.1.0'
+        writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
+        created.push('package.json (added wely)')
+      }
+    } catch (_) {}
+  }
+
+  if (created.length > 0) {
+    console.log('\n  Created:\n')
+    for (const f of created) console.log(`    ${f}`)
+    console.log('\n  Run: npm install\n')
+  } else {
+    console.log('\n  Project already initialized.\n')
   }
 }
 
@@ -69,7 +155,7 @@ function exportCmd() {
 
   if (!flags['no-build']) {
     console.log('\n  Building wely...\n')
-    run('npx vite build')
+    run(getViteCmd('build'))
   }
 
   if (!existsSync(DIST)) {
@@ -85,6 +171,51 @@ function exportCmd() {
   }
 
   copyTo(dest)
+}
+
+function pageCmd() {
+  const pageDir = join(ROOT, 'page')
+  const docsDir = join(ROOT, 'docs')
+  const distDir = join(ROOT, 'dist')
+
+  if (!existsSync(pageDir)) {
+    console.error('  page/ not found.\n')
+    process.exit(1)
+  }
+
+  console.log('\n  Building bundle for demo...\n')
+  run(getViteCmd('build'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
+
+  console.log('  Copying page/ → docs/ for GitHub Pages...\n')
+
+  if (existsSync(docsDir)) rmSync(docsDir, { recursive: true })
+  cpSync(pageDir, docsDir, { recursive: true })
+
+  const assetsDir = join(docsDir, 'assets')
+  if (!existsSync(assetsDir)) mkdirSync(assetsDir, { recursive: true })
+  const bundlePath = join(distDir, 'wely.bundle.umd.js')
+  if (existsSync(bundlePath)) {
+    cpSync(bundlePath, join(assetsDir, 'wely.bundle.umd.js'))
+  }
+
+  const files = readdirSync(docsDir)
+  for (const f of files) {
+    const fp = join(docsDir, f)
+    if (statSync(fp).isFile()) {
+      const kb = (statSync(fp).size / 1024).toFixed(1)
+      console.log(`    docs/${f}  (${kb} kB)`)
+    }
+  }
+  if (existsSync(assetsDir)) {
+    for (const f of readdirSync(assetsDir)) {
+      const fp = join(assetsDir, f)
+      if (statSync(fp).isFile()) {
+        const kb = (statSync(fp).size / 1024).toFixed(1)
+        console.log(`    docs/assets/${f}  (${kb} kB)`)
+      }
+    }
+  }
+  console.log('\n  Push docs/ and enable Pages (Settings → Pages → Source: /docs)\n')
 }
 
 function create() {
@@ -238,8 +369,55 @@ function parseComponentActions(src) {
 }
 
 function dev() {
-  console.log('\n  Starting dev server...\n')
-  run('npx vite', { stdio: 'inherit' })
+  const hasViteConfig = existsSync(join(ROOT, 'vite.config.ts')) || existsSync(join(ROOT, 'vite.config.js'))
+  if (!hasViteConfig) {
+    ensureConsumerFiles()
+    ensureDevFiles()
+    console.log('\n  Starting dev server...\n')
+    run(getViteCmd(`--config ${join(WELY_PKG, 'vite.dev.config.ts')}`), { stdio: 'inherit' })
+  } else {
+    console.log('\n  Starting dev server...\n')
+    run(getViteCmd(), { stdio: 'inherit' })
+  }
+}
+
+function ensureDevFiles() {
+  const created = []
+  if (!existsSync(join(ROOT, 'index.html'))) {
+    writeFileSync(join(ROOT, 'index.html'), `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wely Playground</title>
+  <link rel="stylesheet" href="/src/styles/tailwind.css" />
+</head>
+<body class="bg-zinc-50 text-zinc-900 antialiased p-8">
+  <h1 class="text-2xl font-bold mb-6">Wely <span class="font-light text-zinc-400">playground</span></h1>
+  <div id="app"></div>
+  <script type="module" src="/src/playground/main.ts"></script>
+</body>
+</html>
+`)
+    created.push('index.html')
+  }
+  if (!existsSync(join(ROOT, 'src', 'playground', 'main.ts'))) {
+    mkdirSync(join(ROOT, 'src', 'playground'), { recursive: true })
+    writeFileSync(join(ROOT, 'src', 'playground', 'main.ts'), `import '../../wely.config'
+import '../components'
+console.log('[wely] Playground loaded')
+`)
+    created.push('src/playground/main.ts')
+  }
+  if (!existsSync(join(ROOT, 'src', 'styles', 'tailwind.css'))) {
+    mkdirSync(join(ROOT, 'src', 'styles'), { recursive: true })
+    writeFileSync(join(ROOT, 'src', 'styles', 'tailwind.css'), `@import "tailwindcss";
+@source "../components/**/*.ts";
+@source "../**/*.html";
+`)
+    created.push('src/styles/tailwind.css')
+  }
+  if (created.length > 0) console.log('  Created:', created.join(', '), '\n')
 }
 
 function testCmd() {
@@ -259,6 +437,7 @@ function help() {
     wely <command> [options]
 
   Commands:
+    init                          Create wely.config.ts and add wely to package.json
     create <tag>                 Scaffold a new component
       --props key:Type,...       Add props (e.g. title:String,count:Number)
       --actions name,...         Add actions (e.g. toggle,reset)
@@ -274,6 +453,8 @@ function help() {
       --all                      Build both library and bundle
       --export <path>            Also copy output to <path> after building
 
+    page                         Build static page for GitHub Pages → docs/
+
     export <path>                Build and copy dist/ to <path>
       --no-build                 Skip build, copy existing dist/ only
       --clean                    Remove target directory before copying
@@ -285,6 +466,7 @@ function help() {
     help                         Show this message
 
   Examples:
+    wely init
     wely create w-card
     wely create w-user-list --props name:String,age:Number --actions refresh
     wely sync
@@ -338,7 +520,8 @@ function generateComponent(tag, propsInput, actionsInput) {
   lines.push(` */`)
   lines.push(``)
 
-  lines.push(`import { defineComponent, html } from '../runtime'`)
+  const runtimeImport = existsSync(join(ROOT, 'src', 'runtime')) ? "'../runtime'" : "'wely'"
+  lines.push(`import { defineComponent, html } from ${runtimeImport}`)
   lines.push(``)
   lines.push(`defineComponent({`)
   lines.push(`  // ── Tag ────────────────────────────────────────────────`)
@@ -425,6 +608,14 @@ function ensureComponentsDir() {
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
+
+function getViteCmd(subcmd = '') {
+  const localVite = join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js')
+  if (existsSync(localVite)) return `node ${localVite} ${subcmd}`.trim()
+  const welyVite = join(WELY_PKG, 'node_modules', 'vite', 'bin', 'vite.js')
+  if (existsSync(welyVite)) return `node ${welyVite} ${subcmd}`.trim()
+  return `npx vite ${subcmd}`.trim()
+}
 
 function run(cmd, opts = {}) {
   try {

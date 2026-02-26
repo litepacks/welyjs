@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+/* Ensure component templates and HTML are scanned for Tailwind classes */
+@source "../components/**/*.ts";
+@source "../**/*.html";

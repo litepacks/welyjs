@@ -43,7 +43,57 @@ The output is **native custom elements**. No virtual DOM, no framework runtime a
 <w-counter start="5"></w-counter>
 ```
 
+### Portability
+
+Wely components are **fully portable** — build once, use anywhere.
+
+| Aspect | Behavior |
+|---|---|
+| **Output** | Standard Web Components (Custom Elements v1, Shadow DOM). No framework-specific bundle. |
+| **Consumer runtime** | Zero Wely runtime at the consumer side. Components are plain DOM elements. |
+| **Drop-in** | Works in plain HTML, React, Vue, Angular, Svelte, Astro, Eleventy, or any environment with a DOM. |
+| **Formats** | ES module and UMD — use with bundlers or classic `<script>` tags. |
+| **Deployment** | `wely export <path>` copies the built output to any project folder. No lock-in. |
+
+**Example — use in React:**
+
+```tsx
+<w-counter start={5} />
+```
+
+**Example — use in Vue:**
+
+```vue
+<w-counter start="5" />
+```
+
+**Example — use in plain HTML:**
+
+```html
+<script src="wely.bundle.umd.js"></script>
+<w-pokemon-grid limit="12"></w-pokemon-grid>
+```
+
+The same component works in all of these without modification.
+
 ## Quick Start
+
+### Minimal setup (new project)
+
+Add **only** `wely.config.ts` and `wely` as a dependency. No vite.config, no extra devDependencies — Wely brings them.
+
+```bash
+mkdir my-app && cd my-app
+wely init                    # creates wely.config.ts + package.json with wely
+npm install
+wely create w-hello --props msg:String
+wely build                   # → dist/wely.bundle.es.js, dist/wely.bundle.umd.js
+wely dev                     # playground at localhost:5173
+```
+
+On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/components/index.ts`, and other files as needed.
+
+### Full repo (Wely development)
 
 ```bash
 npm install
@@ -548,11 +598,37 @@ defineComponent({
 })
 ```
 
+### Tailwind in projects using Wely CLI
+
+| Scenario | Tailwind setup |
+|----------|----------------|
+| **Minimal setup** | Run `wely init` then `wely build` or `wely dev`. Wely creates `src/styles/tailwind.css` with correct `@source` on first run. Tailwind is bundled with Wely — no extra deps. |
+| **Bundle consumer** | You use `wely export` and drop the bundle into another app. Tailwind is already compiled — no config needed. |
+| **Custom setup** | With your own `vite.config`, add `@source` in `src/styles/tailwind.css` so Tailwind scans your templates. |
+
+Example `src/styles/tailwind.css` (adjust `@source` if components live elsewhere):
+
+```css
+@import "tailwindcss";
+@source "../components/**/*.ts";
+@source "../**/*.html";
+```
+
 ## CLI
 
-Wely ships a zero-dependency CLI for building and exporting the library.
+Wely CLI runs in the **current working directory** — use it from any project that has Wely installed. New projects need only `wely` as a dependency; Vite and Tailwind come with it.
 
-### Component Management
+### Project setup
+
+```bash
+# Minimal: creates wely.config.ts + package.json with wely
+wely init
+npm install
+```
+
+On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/components/index.ts`, and other files as needed.
+
+### Component management
 
 ```bash
 # Scaffold a new component
@@ -580,28 +656,23 @@ wely docs --out docs/api.md
 
 ### Build & Export
 
-Wely supports two build modes:
-
 | Mode | Command | Output | Use case |
 |---|---|---|---|
-| **Library** (default) | `wely build` | `wely.es.js` + `wely.umd.js` | Consumers import the runtime and write their own components |
-| **Bundle** | `wely build --bundle` | `wely.bundle.es.js` + `wely.bundle.umd.js` | All-in-one — runtime + registered components in a single file |
+| **Library** (default) | `wely build` | `wely.es.js` + `wely.umd.js` | Wely repo — consumers import runtime |
+| **Bundle** | `wely build --bundle` | `wely.bundle.es.js` + `wely.bundle.umd.js` | Runtime + components in one file |
+| **Minimal** | `wely build` (no vite.config) | `wely.bundle.*.js` | Consumer project — bundle by default |
 | **All** | `wely build --all` | Both sets | Publish both variants |
 
 ```bash
-# Library mode — runtime only
+# Minimal project (no vite.config) — bundle mode automatically
 wely build
 
-# Bundle mode — runtime + all components (nested components work out of the box)
-wely build --bundle
+# Full repo with vite.config
+wely build                  # library only
+wely build --bundle         # runtime + components
+wely build --all            # both
 
-# Both modes at once
-wely build --all
-
-# Build and copy output to another project
-wely build --all --export ../my-app/public/vendor/wely
-
-# Export to a target path (builds first by default)
+# Export to another project (builds first by default)
 wely export ../my-app/public/vendor/wely
 
 # Export without rebuilding (uses existing dist/)
@@ -632,6 +703,17 @@ Or link globally:
 npm link
 wely build --export ~/projects/my-app/public/vendor/wely
 ```
+
+### GitHub Pages
+
+Build the project landing page for GitHub Pages:
+
+```bash
+wely page
+# → docs/index.html (static page describing the repo)
+```
+
+Then push and enable: **Settings → Pages → Source: Deploy from a branch → /docs**.
 
 ## Build Output
 

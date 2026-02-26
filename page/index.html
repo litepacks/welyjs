@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Wely — Lightweight Web Component Framework</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    pre { tab-size: 2; margin: 0; }
+    pre code { padding: 0; background: transparent; }
+    code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; }
+    .doc-section { scroll-margin-top: 2rem; }
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #e4e4e7; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #f4f4f5; font-weight: 600; }
+    .dark th, .dark td { border-color: #3f3f46; }
+    .dark th { background: #27272a; }
+    .dark pre { background: #18181b !important; }
+  </style>
+</head>
+<body class="bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100 transition-colors">
+  <div class="max-w-4xl mx-auto px-6 py-12">
+    <div class="flex items-center justify-between mb-12">
+      <nav class="flex flex-wrap gap-3 text-sm">
+        <a href="#why" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Why Wely</a>
+        <a href="#quickstart" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Quick Start</a>
+        <a href="#define" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Define</a>
+        <a href="#composition" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Composition</a>
+        <a href="#demo" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Demo</a>
+        <a href="#api" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">API</a>
+        <a href="#cli" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">CLI</a>
+        <a href="#build" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Build</a>
+        <a href="#styling" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Styling</a>
+        <a href="#browser" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Browser</a>
+        <a href="#portability" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Portability</a>
+        <a href="#principles" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Principles</a>
+      </nav>
+      <button id="theme-toggle" type="button" class="p-2 rounded-lg text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 dark:text-zinc-400" aria-label="Toggle dark mode">
+        <svg id="theme-icon-light" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <svg id="theme-icon-dark" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+      </button>
+    </div>
+
+    <header class="mb-16 flex items-start gap-4">
+      <svg class="flex-shrink-0 w-16 h-16 text-amber-500 dark:text-amber-400" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="wely-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f59e0b" />
+            <stop offset="100%" stop-color="#d97706" />
+          </linearGradient>
+        </defs>
+        <path d="M10 52 L10 14 L22 38 L32 14 L42 38 L54 14 L54 52" stroke="url(#wely-grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <rect x="6" y="6" width="52" height="52" rx="8" stroke="url(#wely-grad)" stroke-width="2" stroke-dasharray="6 4" fill="none" opacity="0.35"/>
+      </svg>
+      <div>
+      <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white">Wely</h1>
+      <p class="mt-2 text-xl text-zinc-600 dark:text-zinc-400">
+        Lightweight Web Component framework — one <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">defineComponent()</code>, no class syntax, no framework lock-in.
+      </p>
+      <p class="mt-2 text-zinc-500 dark:text-zinc-500">
+        Lit powers rendering internally but is never exposed. Developers interact exclusively through the Wely API. Output is native custom elements — fully portable, they run in plain HTML, React, Vue, Angular, Svelte, anywhere.
+      </p>
+      </div>
+    </header>
+
+    <section id="why" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Why Wely?</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4">Building frontend components today typically means choosing a heavy framework and wiring up a dozen tools. Wely replaces that with a single unified toolkit.</p>
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">The problem</h3>
+      <ul class="list-disc pl-5 text-zinc-600 dark:text-zinc-400 space-y-1 mb-6">
+        <li>Too many moving parts — framework, bundler, test runner, CSS pipeline, HTTP client</li>
+        <li>Framework lock-in — components can't be dropped into another stack</li>
+        <li>Boilerplate overhead — class/hook ceremony gets in the way of LLM code generation</li>
+        <li>No single source of truth — build, test, export spread across unrelated scripts</li>
+        <li>Documentation falls behind — prop types and usage live only in developers' heads</li>
+      </ul>
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">How Wely solves it</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr><th>Step</th><th>What you do</th><th>What Wely handles</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td>Configure</td><td><code>wely init</code> → <code>wely.config.ts</code> (or add manually)</td><td>Centralized config via <code>ctx.config</code></td></tr>
+            <tr><td>Create</td><td><code>wely create w-card --props title:String</code></td><td>Scaffolds component file and barrel index</td></tr>
+            <tr><td>Develop</td><td><code>wely dev</code></td><td>Hot-reloading playground</td></tr>
+            <tr><td>Style</td><td>Use Tailwind classes in templates</td><td>Compiled and injected into Shadow DOM</td></tr>
+            <tr><td>Fetch</td><td><code>createClient({ baseURL })</code></td><td>HTTP client with interceptors, timeout</td></tr>
+            <tr><td>State</td><td><code>ctx.resource()</code> / <code>ctx.use(store)</code></td><td>Async resources + shared stores</td></tr>
+            <tr><td>Test</td><td><code>wely test</code></td><td>Vitest with zero extra config</td></tr>
+            <tr><td>Build</td><td><code>wely build</code></td><td>ES + UMD bundles</td></tr>
+            <tr><td>Export</td><td><code>wely export ../other-project/lib</code></td><td>Copies output to any folder</td></tr>
+            <tr><td>Document</td><td><code>wely docs</code></td><td>Generates <code>COMPONENTS.md</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-4 text-zinc-500 dark:text-zinc-500 text-sm">One CLI, one config file — from scaffolding to production.</p>
+    </section>
+
+    <section id="quickstart" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Quick Start</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Minimal (new project):</strong> Only <code>wely.config.ts</code> + <code>wely</code> — no vite.config, no extra deps.</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto mb-4"><code class="language-bash">mkdir my-app &amp;&amp; cd my-app
+wely init
+npm install
+wely create w-hello --props msg:String
+wely build                   # → dist/wely.bundle.*.js
+wely dev                      # playground at localhost:5173</code></pre>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Full repo (Wely development):</strong></p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-bash">npm install
+npm run dev      # playground at localhost:5173
+npm run build    # library → dist/wely.es.js + dist/wely.umd.js
+npm run test
+npm run test:run</code></pre>
+    </section>
+
+    <section id="define" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Defining a Component</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4">Every component is a plain object passed to <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">defineComponent()</code>:</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-javascript">import { defineComponent, html } from 'wely'
+
+defineComponent({
+  tag: 'w-counter',
+  props: { start: Number },
+  state() { return { count: 0 } },
+  setup(ctx) { ctx.state.count = ctx.props.start ?? 0 },
+  actions: {
+    increment(ctx) { ctx.state.count++ },
+    decrement(ctx) { ctx.state.count-- },
+    reset(ctx) { ctx.state.count = ctx.props.start ?? 0 },
+  },
+  render(ctx) {
+    return html`
+      &lt;button @click=${ctx.actions.decrement}&gt;-&lt;/button&gt;
+      &lt;span&gt;${ctx.state.count}&lt;/span&gt;
+      &lt;button @click=${ctx.actions.increment}&gt;+&lt;/button&gt;
+      &lt;button @click=${ctx.actions.reset}&gt;Reset&lt;/button&gt;
+    `
+  },
+})</code></pre>
+      <p class="mt-3 text-zinc-500 dark:text-zinc-500 text-sm">Use it: <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">&lt;w-counter start="5"&gt;&lt;/w-counter&gt;</code></p>
+    </section>
+
+    <section id="composition" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Component Composition</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4">Wely components are native Custom Elements — nest them by using the tag name:</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-javascript">render(ctx) {
+  return html`
+    &lt;div class="border rounded-lg p-4"&gt;
+      &lt;h3&gt;${ctx.props.title}&lt;/h3&gt;
+      &lt;w-counter start=${ctx.props.start ?? 0}&gt;&lt;/w-counter&gt;
+      &lt;w-button label="Action" @w-click=${ctx.actions.onClick}&gt;&lt;/w-button&gt;
+    &lt;/div&gt;
+  `
+}</code></pre>
+      <ul class="mt-4 text-zinc-600 dark:text-zinc-400 text-sm space-y-1">
+        <li><strong>props</strong> → parent to child (attributes)</li>
+        <li><strong>emit</strong> → child to parent (<code>ctx.emit('event-name', payload)</code>)</li>
+        <li><strong>store</strong> → any to any (<code>createStore()</code> + <code>ctx.use(store)</code>)</li>
+        <li><strong>slot</strong> → project content into child Shadow DOM</li>
+      </ul>
+    </section>
+
+    <section id="demo" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Live Demo — PokéAPI</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4">Fetching data with <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">ctx.resource()</code>. Data from <a href="https://pokeapi.co" target="_blank" rel="noopener" class="text-amber-600 dark:text-amber-400 hover:underline">PokéAPI</a>.</p>
+      <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 p-6 bg-white dark:bg-zinc-900">
+        <w-pokemon-grid limit="9"></w-pokemon-grid>
+      </div>
+    </section>
+
+    <section id="api" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">API Surface</h2>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">defineComponent(def)</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Registers a native custom element. Fields: <code>tag</code>, <code>props</code>, <code>styles</code>, <code>state()</code>, <code>actions</code>, <code>setup(ctx)</code>, <code>render(ctx)</code>, <code>connected(ctx)</code>, <code>disconnected(ctx)</code>.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">The ctx object</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr><th>Property</th><th>Description</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td><code>ctx.el</code></td><td>Host HTMLElement</td></tr>
+            <tr><td><code>ctx.props</code></td><td>Readonly attribute-synced properties</td></tr>
+            <tr><td><code>ctx.state</code></td><td>Auto-reactive state (mutations trigger re-render)</td></tr>
+            <tr><td><code>ctx.actions</code></td><td>Bound action map</td></tr>
+            <tr><td><code>ctx.update()</code></td><td>Manually request re-render</td></tr>
+            <tr><td><code>ctx.emit(event, payload?)</code></td><td>Dispatch CustomEvent</td></tr>
+            <tr><td><code>ctx.resource(fetcher, opts?)</code></td><td>Async resource bound to lifecycle</td></tr>
+            <tr><td><code>ctx.use(store)</code></td><td>Subscribe to shared store</td></tr>
+            <tr><td><code>ctx.config</code></td><td>Read-only config from wely.config.ts</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">createClient(config?)</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Zero-dependency HTTP client (native fetch). Axios-like: <code>get</code>, <code>post</code>, <code>put</code>, <code>patch</code>, <code>delete</code>, <code>onRequest</code>, <code>onResponse</code>, <code>onError</code>. Interceptors, timeout, query params, JSON.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">createResource(fetcher, options?)</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Async data primitive. Use via <code>ctx.resource()</code>. Tracks <code>data</code>, <code>loading</code>, <code>error</code>. Methods: <code>fetch()</code>, <code>refetch()</code>, <code>abort()</code>, <code>mutate()</code>, <code>reset()</code>.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">createStore(def)</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Shared reactive state. <code>state: () => ({...})</code>, <code>actions: { name(state, ...args) {...} }</code>. Use <code>ctx.use(store)</code> to subscribe.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">Configuration</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Define in <code>wely.config.ts</code> with <code>defineConfig()</code>. Read with <code>getConfig()</code>, <code>useConfig(key)</code>, or <code>ctx.config</code>. Supports <code>import.meta.env.VITE_*</code>.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">Re-exported from Lit</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><code>html</code>, <code>css</code>, <code>nothing</code></p>
+    </section>
+
+    <section id="cli" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">CLI</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3">Runs in the current directory. New projects: <code>wely init</code> → <code>npm install</code> → <code>wely create</code> → <code>wely build</code>. Wely brings Vite and Tailwind — no extra deps.</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-bash"># Setup
+wely init                    # wely.config.ts + package.json
+npm install
+
+# Components
+wely create w-card --props title:String
+wely create w-user --props name:String,age:Number --actions refresh,delete
+wely sync
+wely list
+wely docs
+wely docs --out docs/api.md
+
+# Build (minimal project: bundle by default; full repo: library)
+wely build
+wely build --bundle
+wely build --all
+wely build --export ../app/public/vendor/wely
+
+# Deploy
+wely export ../other-project/lib
+wely export ./out --no-build
+wely export ../lib --clean
+
+# Dev &amp; test
+wely dev
+wely test
+wely test --run
+
+# GitHub Pages
+wely page                    # → docs/</code></pre>
+    </section>
+
+    <section id="build" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Build Output</h2>
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-sm">
+          <thead><tr><th>Command</th><th>Output</th><th>Use case</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td><code>wely build</code> (no vite.config)</td><td>wely.bundle.*.js</td><td>Minimal project — bundle by default</td></tr>
+            <tr><td><code>wely build</code> (with vite.config)</td><td>wely.es.js, wely.umd.js</td><td>Library — consumers write components</td></tr>
+            <tr><td><code>wely build --bundle</code></td><td>wely.bundle.*.js</td><td>Runtime + all components</td></tr>
+            <tr><td><code>wely build --all</code></td><td>All four files</td><td>Publish both variants</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Bundle: drop-in script. Library: <code>import { defineComponent, html } from 'wely'</code>.</p>
+    </section>
+
+    <section id="styling" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Styling</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-2">Tailwind CSS v4 is integrated:</p>
+      <ul class="text-zinc-600 dark:text-zinc-400 text-sm space-y-1 list-disc pl-5 mb-4">
+        <li>Playground / host page — import <code>tailwind.css</code> normally</li>
+        <li>Shadow DOM — compiled to constructable stylesheet, adopted into each component automatically</li>
+        <li>Component-scoped — use <code>styles: css`:host { ... }`</code></li>
+      </ul>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2"><strong>Minimal setup:</strong> <code>wely init</code> + <code>wely build</code> — CLI creates <code>tailwind.css</code> with correct <code>@source</code> on first run. <strong>Bundle consumers:</strong> no config — Tailwind baked in.</p>
+    </section>
+
+    <section id="browser" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Browser Support</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr><th>Browser</th><th>Minimum</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td>Chrome</td><td>73+</td></tr>
+            <tr><td>Edge</td><td>79+</td></tr>
+            <tr><td>Firefox</td><td>101+</td></tr>
+            <tr><td>Safari</td><td>16.4+</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-zinc-500 dark:text-zinc-500 text-sm mt-2">Custom Elements v1, Shadow DOM, adoptedStyleSheets, Proxy</p>
+    </section>
+
+    <section id="portability" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Portability</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4">Wely components are <strong>fully portable</strong> — build once, use anywhere. They are standard Web Components; no framework runtime at the consumer side.</p>
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-sm">
+          <thead><tr><th>Aspect</th><th>Behavior</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td>Output</td><td>Custom Elements v1, Shadow DOM — no framework-specific bundle</td></tr>
+            <tr><td>Consumer runtime</td><td>Zero Wely runtime — components are plain DOM elements</td></tr>
+            <tr><td>Drop-in</td><td>Plain HTML, React, Vue, Angular, Svelte, Astro, Eleventy, any DOM environment</td></tr>
+            <tr><td>Formats</td><td>ES module + UMD — bundlers or classic <code>&lt;script&gt;</code></td></tr>
+            <tr><td>Deployment</td><td><code>wely export &lt;path&gt;</code> copies output to any project</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-zinc-500 dark:text-zinc-500 text-sm">Same component, same API — works in all environments without modification.</p>
+    </section>
+
+    <section id="principles" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Design Principles</h2>
+      <ul class="text-zinc-600 dark:text-zinc-400 space-y-1">
+        <li><strong class="text-zinc-800 dark:text-zinc-200">Single factory</strong> — every component is one <code>defineComponent()</code> call, no classes</li>
+        <li><strong class="text-zinc-800 dark:text-zinc-200">LLM-friendly</strong> — <code>actions</code> pattern separates logic from templates</li>
+        <li><strong class="text-zinc-800 dark:text-zinc-200">Auto-reactive state</strong> — Proxy triggers re-renders automatically</li>
+        <li><strong class="text-zinc-800 dark:text-zinc-200">Zero lock-in</strong> — output is native custom elements, runs anywhere</li>
+        <li><strong class="text-zinc-800 dark:text-zinc-200">Minimal runtime</strong> — core factory under 170 lines</li>
+      </ul>
+    </section>
+
+    <section class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Tech Stack</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr><th>Layer</th><th>Tool</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td>Language</td><td>TypeScript</td></tr>
+            <tr><td>Rendering</td><td>Lit (internal)</td></tr>
+            <tr><td>Styling</td><td>Tailwind CSS v4</td></tr>
+            <tr><td>Dev / Build</td><td>Vite</td></tr>
+            <tr><td>Testing</td><td>Vitest + jsdom</td></tr>
+            <tr><td>Output</td><td>ES module + UMD</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Project Structure</h2>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-bash">src/
+  runtime/          defineComponent, config, registry, fetch, resource, store
+  components/       w-counter, w-button, w-counter-card, w-pokemon-grid, w-user-list
+  styles/           tailwind.css
+  playground/       main.ts
+index.html          Playground
+wely.config.ts      App config
+vite.config.ts      Vite + Vitest
+page/               GitHub Pages landing (this page)</code></pre>
+    </section>
+
+    <footer class="pt-12 border-t border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center gap-6">
+      <a id="repo-link" href="#" class="inline-flex items-center gap-2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>
+        Source
+      </a>
+      <span class="text-zinc-400 dark:text-zinc-500 text-sm">MIT</span>
+      <script>
+        (function(){
+          var m = location.hostname.match(/^([^.]+)\.github\.io$/);
+          var p = location.pathname.split('/').filter(Boolean)[0];
+          if (m && p) document.getElementById('repo-link').href = 'https://github.com/' + m[1] + '/' + p;
+        })();
+      </script>
+    </footer>
+  </div>
+
+  <script src="./assets/wely.bundle.umd.js"></script>
+  <script>
+    hljs.highlightAll();
+
+    (function(){
+      var q = document.querySelector.bind(document);
+      var hash = location.hash;
+      if (hash) {
+        var el = q(hash);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      var themeKey = 'wely-theme';
+      var stored = localStorage.getItem(themeKey);
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (stored === 'dark' || (!stored && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      q('#theme-toggle').addEventListener('click', function(){
+        var isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem(themeKey, isDark ? 'dark' : 'light');
+      });
+    })();
+  </script>
+</body>
+</html>

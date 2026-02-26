@@ -6,6 +6,9 @@
 |---|---|---|---|
 | `<w-button>` | `label`, `variant`, `disabled` | `handleClick` | `src/components/w-button.ts` |
 | `<w-counter>` | `start` | `increment`, `decrement`, `reset` | `src/components/w-counter.ts` |
+| `<w-counter-card>` | `title`, `start` | `onCounterClick` | `src/components/w-counter-card.ts` |
+| `<w-pokemon-grid>` | `limit` | `refresh` | `src/components/w-pokemon-grid.ts` |
+| `<w-user-list>` | `endpoint` | — | `src/components/w-user-list.ts` |
 
 ## `<w-button>`
 
@@ -45,4 +48,55 @@
 
 ```html
 <w-counter start="..."></w-counter>
+```
+
+## `<w-counter-card>`
+
+**File:** `src/components/w-counter-card.ts`
+
+**Props:**
+
+- `title` — `String`
+- `start` — `Number`
+
+**Actions:**
+
+- `onCounterClick()`
+
+**Usage:**
+
+```html
+<w-counter-card title="..." start="..."></w-counter-card>
+```
+
+## `<w-pokemon-grid>`
+
+**File:** `src/components/w-pokemon-grid.ts`
+
+**Props:**
+
+- `limit` — `Number`
+
+**Actions:**
+
+- `refresh()`
+
+**Usage:**
+
+```html
+<w-pokemon-grid limit="..."></w-pokemon-grid>
+```
+
+## `<w-user-list>`
+
+**File:** `src/components/w-user-list.ts`
+
+**Props:**
+
+- `endpoint` — `String`
+
+**Usage:**
+
+```html
+<w-user-list endpoint="..."></w-user-list>
 ```
