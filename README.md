@@ -688,6 +688,8 @@ wely export ../my-app/lib/wely --clean
 wely dev
 wely test
 wely test --run
+npm run test:e2e     # CLI + build output e2e tests
+npm run test:browser # Playwright — real browser render tests
 ```
 
 Run via npm script:

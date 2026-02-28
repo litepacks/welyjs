@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wely Browser Tests</title>
+</head>
+<body>
+  <div id="app">
+    <h1 id="title">Wely Render Test</h1>
+    <section id="counter-section">
+      <w-counter start="5" id="counter"></w-counter>
+    </section>
+    <section id="button-section">
+      <w-button label="Click me" id="btn"></w-button>
+      <w-button label="Primary" variant="primary" id="btn-primary"></w-button>
+      <w-button label="Disabled" disabled id="btn-disabled"></w-button>
+    </section>
+    <section id="counter-card-section">
+      <w-counter-card title="Score" start="10" id="counter-card"></w-counter-card>
+    </section>
+    <section id="pokemon-section">
+      <w-pokemon-grid limit="6" id="pokemon-grid"></w-pokemon-grid>
+    </section>
+    <section id="user-list-section">
+      <w-user-list endpoint="https://jsonplaceholder.typicode.com/users" id="user-list"></w-user-list>
+    </section>
+  </div>
+  <script src="/dist/wely.bundle.umd.js"></script>
+  <script>
+    if (typeof Wely !== 'undefined') {
+      document.body.dataset.bundleLoaded = 'true';
+    }
+  </script>
+</body>
+</html>

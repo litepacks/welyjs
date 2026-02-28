@@ -13,7 +13,7 @@
  * ```
  */
 
-import { defineComponent, html, createClient, createStore } from '../runtime'
+import { defineComponent, html, createClient, createStore, type Store } from '../runtime'
 
 interface User {
   id: number
@@ -23,14 +23,16 @@ interface User {
 
 const api = createClient()
 
+type FilterState = { search: string }
+
 export const userFilterStore = createStore({
   state: () => ({ search: '' }),
   actions: {
-    setSearch(state, value: string) {
+    setSearch(state: { search: string }, value: string) {
       state.search = value
     },
   },
-})
+}) as Store<{ search: string }, { setSearch: (s: { search: string }, v: string) => void }>
 
 defineComponent({
   // ── Tag ────────────────────────────────────────────────
@@ -45,6 +47,7 @@ defineComponent({
   state() {
     return {
       users: null as { data: User[] | undefined; loading: boolean; error: Error | undefined } | null,
+      _filter: null as { state: { search: string } } | null,
     }
   },
 

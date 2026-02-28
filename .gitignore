@@ -47,6 +47,14 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Browser test screenshots
+ss/
+
 # Optional npm cache directory
 .npm
 

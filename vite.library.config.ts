@@ -13,7 +13,11 @@ export default defineConfig({
   root,
   plugins: [tailwindcss()],
   build: {
-    target: ['chrome73', 'firefox101', 'safari16.4', 'edge79'],
+    target: 'es2020',
+    minify: 'terser',
+    terserOptions: { compress: { passes: 2 }, format: { comments: false } },
+    sourcemap: false,
+    rollupOptions: { output: { compact: true } },
     lib: {
       entry: resolve(root, 'src/bundle.ts'),
       name: 'Wely',

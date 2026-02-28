@@ -12,13 +12,13 @@ defineComponent({
   },
 
   setup(ctx) {
-    ctx.state.count = ctx.props.start ?? 0
+    ctx.state.count = Number(ctx.props.start) || 0
   },
 
   actions: {
     increment(ctx) { ctx.state.count++ },
     decrement(ctx) { ctx.state.count-- },
-    reset(ctx) { ctx.state.count = ctx.props.start ?? 0 },
+    reset(ctx) { ctx.state.count = Number(ctx.props.start) || 0 },
   },
 
   render(ctx) {

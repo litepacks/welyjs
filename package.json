@@ -34,13 +34,21 @@
     "test:run": "vitest run",
     "wely": "node bin/wely.mjs",
     "build:bundle": "WELY_BUILD_MODE=bundle vite build --emptyOutDir false",
-    "prepublishOnly": "npm run build && npm run build:bundle"
+    "prepublishOnly": "npm run build && npm run build:bundle",
+    "test:e2e": "vitest run e2e",
+    "test:browser": "npm run prepublishOnly && playwright test"
   },
   "browserslist": [
     "Chrome >= 73",
     "Firefox >= 101",
     "Safari >= 16.4",
     "Edge >= 79"
+  ],
+  "sideEffects": [
+    "./dist/wely.bundle.es.js",
+    "./dist/wely.bundle.umd.js",
+    "./src/components/**",
+    "./src/bundle.ts"
   ],
   "license": "MIT",
   "dependencies": {
@@ -51,7 +59,9 @@
     "vite": "^7.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "jsdom": "^28.1.0",
+    "terser": "^5.46.0",
     "typescript": "^5.9.3",
     "vite-plugin-dts": "^4.5.4",
     "vitest": "^4.0.18"

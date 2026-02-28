@@ -3,7 +3,6 @@ import { defineConfig } from 'vite'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import dts from 'vite-plugin-dts'
-
 const isBundle = process.env.WELY_BUILD_MODE === 'bundle'
 
 export default defineConfig({
@@ -12,7 +11,16 @@ export default defineConfig({
     !isBundle && dts({ rollupTypes: true, outDir: 'dist', exclude: ['**/__tests__/**', '**/*.test.ts'] }),
   ].filter(Boolean),
   build: {
-    target: ['chrome73', 'firefox101', 'safari16.4', 'edge79'],
+    target: 'es2020',
+    minify: 'terser',
+    terserOptions: {
+      compress: { passes: 2, drop_console: false },
+      format: { comments: false },
+    },
+    sourcemap: false,
+    rollupOptions: {
+      output: { compact: true },
+    },
     lib: isBundle
       ? {
           entry: resolve(__dirname, 'src/bundle.ts'),
@@ -28,5 +36,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    include: ['src/**/*.test.ts', 'e2e/**/*.e2e.test.ts'],
   },
 })
