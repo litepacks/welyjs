@@ -14,8 +14,7 @@ export default defineConfig({
   plugins: [tailwindcss()],
   build: {
     target: 'es2020',
-    minify: 'terser',
-    terserOptions: { compress: { passes: 2 }, format: { comments: false } },
+    minify: 'esbuild',
     sourcemap: false,
     rollupOptions: { output: { compact: true } },
     lib: {
