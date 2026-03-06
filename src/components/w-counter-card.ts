@@ -13,7 +13,6 @@
  * ```
  */
 
-import dayjs from 'dayjs'
 import { defineComponent, html } from '../runtime'
 
 defineComponent({
@@ -34,7 +33,8 @@ defineComponent({
   // ── Actions ────────────────────────────────────────────
   actions: {
     onCounterClick(ctx) {
-      ctx.state.lastEvent = `Button clicked at ${dayjs().format('HH:mm:ss')}`
+      const t = new Date()
+      ctx.state.lastEvent = `Button clicked at ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}:${t.getSeconds().toString().padStart(2,'0')}`
     },
   },
 

@@ -652,29 +652,27 @@ function copyTo(dest) {
     mkdirSync(dest, { recursive: true })
   }
 
-  const files = readdirSync(DIST)
-  let copied = 0
-
-  for (const file of files) {
+  let count = 0
+  for (const file of readdirSync(DIST)) {
     const src = join(DIST, file)
     const target = join(dest, file)
     if (statSync(src).isFile()) {
       cpSync(src, target)
-      copied++
-    }
-  }
-
-  console.log(`\n  Exported ${copied} file(s) → ${dest}\n`)
-
-  for (const file of files) {
-    const src = join(DIST, file)
-    if (statSync(src).isFile()) {
+      count++
       const kb = (statSync(src).size / 1024).toFixed(1)
-      console.log(`    ${file}  (${kb} kB)`)
+      console.log(`    dist/${file}  (${kb} kB)`)
+    } else if (statSync(src).isDirectory()) {
+      cpSync(src, target, { recursive: true })
+      for (const sub of readdirSync(src)) {
+        count++
+        const subFp = join(src, sub)
+        const kb = (statSync(subFp).size / 1024).toFixed(1)
+        console.log(`    dist/${file}/${sub}  (${kb} kB)`)
+      }
     }
   }
 
-  console.log()
+  console.log(`\n  Exported ${count} file(s) → ${dest}\n`)
 }
 
 function printDist() {

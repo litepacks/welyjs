@@ -10,10 +10,6 @@
     ".": {
       "import": "./dist/wely.es.js",
       "require": "./dist/wely.umd.js"
-    },
-    "./bundle": {
-      "import": "./dist/wely.bundle.es.js",
-      "require": "./dist/wely.bundle.umd.js"
     }
   },
   "bin": {
@@ -34,9 +30,10 @@
     "test:run": "vitest run",
     "wely": "node bin/wely.mjs",
     "build:bundle": "WELY_BUILD_MODE=bundle vite build --emptyOutDir false",
-    "prepublishOnly": "npm run build && npm run build:bundle",
+    "build:chunks": "WELY_BUILD_MODE=chunks vite build --emptyOutDir false",
+    "prepublishOnly": "npm run build",
     "test:e2e": "vitest run e2e",
-    "test:browser": "npm run prepublishOnly && playwright test"
+    "test:browser": "npm run build && npm run build:bundle && playwright test"
   },
   "browserslist": [
     "Chrome >= 73",
@@ -44,16 +41,10 @@
     "Safari >= 16.4",
     "Edge >= 79"
   ],
-  "sideEffects": [
-    "./dist/wely.bundle.es.js",
-    "./dist/wely.bundle.umd.js",
-    "./src/components/**",
-    "./src/bundle.ts"
-  ],
+  "sideEffects": false,
   "license": "MIT",
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
-    "dayjs": "^1.11.19",
     "lit": "^3.3.2",
     "tailwindcss": "^4.2.1",
     "vite": "^7.3.1"

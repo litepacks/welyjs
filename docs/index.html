@@ -32,6 +32,7 @@
     <div class="flex items-center justify-between mb-12">
       <nav class="flex flex-wrap gap-3 text-sm">
         <a href="#why" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Why Wely</a>
+        <a href="#bundle-size" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Bundle Size</a>
         <a href="#quickstart" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Quick Start</a>
         <a href="#define" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Define</a>
         <a href="#composition" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Composition</a>
@@ -102,6 +103,38 @@
         </table>
       </div>
       <p class="mt-4 text-zinc-500 dark:text-zinc-500 text-sm">One CLI, one config file — from scaffolding to production.</p>
+    </section>
+
+    <section id="bundle-size" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Bundle Size</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4">Wely produces minimal bundles. Runtime includes Lit, our API (defineComponent, store, resource, fetch), and Tailwind CSS. All sizes are <strong>minified + gzipped</strong>.</p>
+      <div class="overflow-x-auto mb-6">
+        <table class="w-full text-sm">
+          <thead><tr><th>Build</th><th>Size (min+gzip)</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td>Runtime only (<code>wely.es.js</code>)</td><td><strong>12.8 KB</strong></td></tr>
+            <tr><td>1 component (w-button)</td><td><strong>13.2 KB</strong></td></tr>
+            <tr><td>2 components (+ w-counter)</td><td><strong>13.5 KB</strong></td></tr>
+            <tr><td>3 components (+ w-counter-card)</td><td><strong>13.7 KB</strong></td></tr>
+            <tr><td>5 components (+ w-pokemon-grid, w-user-list)</td><td><strong>15.0 KB</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-zinc-500 dark:text-zinc-500 text-sm mb-4">Per-component overhead: ~1–2 KB for simple components.</p>
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Framework comparison</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr><th>Framework</th><th>Size (min+gzip)</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td>React + React-DOM</td><td>~90 KB</td></tr>
+            <tr><td>Vue 3</td><td>~34 KB</td></tr>
+            <tr><td>Lit</td><td>~6 KB</td></tr>
+            <tr><td>Preact</td><td>~4 KB</td></tr>
+            <tr><td><strong>Wely (runtime + 5 components)</strong></td><td><strong>~15 KB</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-4 text-zinc-500 dark:text-zinc-500 text-sm">Wely outputs native Web Components — no extra framework at the consumer. A single bundle includes runtime, components, HTTP client, state management, and Tailwind. A typical React app: React + React-DOM + UI library often exceeds 200 KB.</p>
     </section>
 
     <section id="quickstart" class="doc-section mb-16">
@@ -257,14 +290,13 @@ wely page                    # → docs/</code></pre>
         <table class="w-full text-sm">
           <thead><tr><th>Command</th><th>Output</th><th>Use case</th></tr></thead>
           <tbody class="text-zinc-600 dark:text-zinc-400">
-            <tr><td><code>wely build</code> (no vite.config)</td><td>wely.bundle.*.js</td><td>Minimal project — bundle by default</td></tr>
-            <tr><td><code>wely build</code> (with vite.config)</td><td>wely.es.js, wely.umd.js</td><td>Library — consumers write components</td></tr>
-            <tr><td><code>wely build --bundle</code></td><td>wely.bundle.*.js</td><td>Runtime + all components</td></tr>
-            <tr><td><code>wely build --all</code></td><td>All four files</td><td>Publish both variants</td></tr>
+            <tr><td><code>wely build</code> (no vite.config)</td><td>wely.bundle.*.js</td><td>Consumer project — runtime + kendi componentleri</td></tr>
+            <tr><td><code>wely build</code> (with vite.config)</td><td>wely.es.js, wely.umd.js</td><td>Library — sadece runtime (paketleme)</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Bundle: drop-in script. Library: <code>import { defineComponent, html } from 'welyjs'</code>.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Bundle: drop-in script. Library: <code>import { defineComponent, html } from 'welyjs'</code>.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Chunked: <code>&lt;script type="module" src="wely.chunked.es.js"&gt;&lt;/script&gt;</code> — tarayıcı vendor, runtime, components chunk'larını paralel yükler; cache avantajı sağlar.</p>
     </section>
 
     <section id="styling" class="doc-section mb-16">

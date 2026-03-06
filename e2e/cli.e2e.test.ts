@@ -196,21 +196,15 @@ describe('CLI e2e', () => {
 })
 
 describe('Build output verification (wely repo)', () => {
-  it('prepublishOnly produces all dist files with expected content', { timeout: 30000 }, () => {
+  it('prepublishOnly produces runtime dist files only', { timeout: 30000 }, () => {
     run('npm run prepublishOnly', WELY_ROOT, { silent: true })
 
     const distDir = join(WELY_ROOT, 'dist')
     expect(existsSync(join(distDir, 'wely.es.js'))).toBe(true)
     expect(existsSync(join(distDir, 'wely.umd.js'))).toBe(true)
-    expect(existsSync(join(distDir, 'wely.bundle.es.js'))).toBe(true)
-    expect(existsSync(join(distDir, 'wely.bundle.umd.js'))).toBe(true)
     expect(existsSync(join(distDir, 'index.d.ts'))).toBe(true)
 
     const lib = readFileSync(join(distDir, 'wely.es.js'), 'utf-8')
     expect(lib).toContain('defineComponent')
-
-    const bundle = readFileSync(join(distDir, 'wely.bundle.es.js'), 'utf-8')
-    expect(bundle).toContain('defineComponent')
-    expect(bundle).toContain('w-button')
   })
 })

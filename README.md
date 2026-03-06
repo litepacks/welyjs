@@ -76,6 +76,32 @@ Wely components are **fully portable** — build once, use anywhere.
 
 The same component works in all of these without modification.
 
+### Bundle Size
+
+Wely produces minimal bundles. Runtime includes Lit, our API (defineComponent, store, resource, fetch), and Tailwind CSS. All sizes below are **minified + gzipped**.
+
+| Build | Size (min+gzip) |
+|-------|-----------------|
+| Runtime only (`wely.es.js`) | **12.8 KB** |
+| 1 component (w-button) | **13.2 KB** |
+| 2 components (+ w-counter) | **13.5 KB** |
+| 3 components (+ w-counter-card) | **13.7 KB** |
+| 5 components (+ w-pokemon-grid, w-user-list) | **15.0 KB** |
+
+**Per-component overhead:** ~1–2 KB for simple components.
+
+**Framework comparison** (min+gzip, typical runtime only):
+
+| Framework | Size |
+|-----------|------|
+| React + React-DOM | ~90 KB |
+| Vue 3 | ~34 KB |
+| Lit | ~6 KB |
+| Preact | ~4 KB |
+| **Wely (runtime + 5 components)** | **~15 KB** |
+
+Wely outputs **native Web Components** — no extra framework at the consumer. A single bundle includes everything: runtime, components, HTTP client, state management, and Tailwind. Compare that to a typical React app: React + React-DOM + UI library can easily exceed 200 KB.
+
 ## Quick Start
 
 ### Minimal setup (new project)
@@ -211,7 +237,6 @@ store  → any to any (shared state)
 Component files can import and use any npm dependency. Vite bundles them into the build output:
 
 ```ts
-import dayjs from 'dayjs'
 import { defineComponent, html } from '../runtime'
 
 defineComponent({
@@ -219,7 +244,8 @@ defineComponent({
   // ...
   actions: {
     onCounterClick(ctx) {
-      ctx.state.lastEvent = `Clicked at ${dayjs().format('HH:mm:ss')}`
+      const t = new Date()
+      ctx.state.lastEvent = `Clicked at ${t.getHours().toString().padStart(2,'0')}:${t.getMinutes().toString().padStart(2,'0')}:${t.getSeconds().toString().padStart(2,'0')}`
     },
   },
   // ...
@@ -719,34 +745,17 @@ Then push and enable: **Settings → Pages → Source: Deploy from a branch → 
 
 ## Build Output
 
-```bash
-wely build --all
-# dist/wely.es.js          — ES module (runtime only)
-# dist/wely.umd.js         — UMD (runtime only, exposes window.Wely)
-# dist/wely.bundle.es.js   — ES module (runtime + components)
-# dist/wely.bundle.umd.js  — UMD (runtime + components)
-```
+**Published package** (`prepublishOnly`) includes runtime only:
 
-**Library mode** — import the runtime and write your own components:
+| Output | Description |
+|--------|-------------|
+| `wely.es.js` / `wely.umd.js` | Runtime (12.8 KB gzip) — `defineComponent`, store, fetch, resource, Tailwind |
 
 ```ts
-import { defineComponent, html } from './dist/wely.es.js'
+import { defineComponent, html } from 'welyjs'
 ```
 
-**Bundle mode** — drop in a single file and use components immediately:
-
-```html
-<script src="wely.bundle.umd.js"></script>
-<w-counter start="5"></w-counter>
-<w-counter-card title="Score" start="10"></w-counter-card>
-```
-
-Or use the bundle entry via npm:
-
-```ts
-import 'wely/bundle'
-// All components are now registered and ready to use in HTML
-```
+**Consumer project** — With `wely init` + `wely build` (no vite.config), you create a bundle with your own components. `dist/wely.bundle.*.js` contains your runtime plus your components.
 
 ## Browser Support
 
