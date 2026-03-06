@@ -38,6 +38,7 @@
         <a href="#composition" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Composition</a>
         <a href="#demo" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Demo</a>
         <a href="#api" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">API</a>
+        <a href="#devinfo" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">devInfo</a>
         <a href="#cli" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">CLI</a>
         <a href="#build" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Build</a>
         <a href="#styling" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Styling</a>
@@ -200,7 +201,7 @@ defineComponent({
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">API Surface</h2>
 
       <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">defineComponent(def)</h3>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Registers a native custom element. Fields: <code>tag</code>, <code>props</code>, <code>styles</code>, <code>state()</code>, <code>actions</code>, <code>setup(ctx)</code>, <code>render(ctx)</code>, <code>connected(ctx)</code>, <code>disconnected(ctx)</code>.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Registers a native custom element. Fields: <code>tag</code>, <code>props</code>, <code>devInfo</code>, <code>styles</code>, <code>state()</code>, <code>actions</code>, <code>setup(ctx)</code>, <code>render(ctx)</code>, <code>connected(ctx)</code>, <code>disconnected(ctx)</code>.</p>
 
       <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">The ctx object</h3>
       <div class="overflow-x-auto">
@@ -234,6 +235,25 @@ defineComponent({
 
       <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">Re-exported from Lit</h3>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm"><code>html</code>, <code>css</code>, <code>nothing</code></p>
+
+      <h3 id="devinfo" class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">devInfo — Dev tools attributes</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">When enabled (default), each component gets <code>data-wely-version</code> and <code>data-wely-mounted</code> attributes — visible in browser DevTools. Version comes from <code>defineConfig({ version: '1.0.0' })</code> or per-component override.</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto mb-2"><code class="language-javascript">// Default: attributes added
+defineComponent({ tag: 'w-card', render: () => html`...` })
+
+// Disable
+defineComponent({ tag: 'w-secret', devInfo: false, render: () => html`...` })
+
+// Override version per component
+defineComponent({ tag: 'w-card', devInfo: { version: '2.0.0' }, render: () => html`...` })</code></pre>
+      <p class="text-zinc-500 dark:text-zinc-500 text-xs">Set <code>version</code> in <code>wely.config.ts</code> for global devInfo version.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">componentsDir — Components folder</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Override the default <code>src/wely-components</code> via <code>package.json</code>:</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-json">{
+  "wely": { "componentsDir": "src/components" }
+}</code></pre>
+      <p class="text-zinc-500 dark:text-zinc-500 text-xs">Used by <code>create</code>, <code>sync</code>, <code>list</code>, <code>docs</code>, <code>build</code>, <code>dev</code>.</p>
     </section>
 
     <section id="cli" class="doc-section mb-16">
