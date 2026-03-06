@@ -34,6 +34,7 @@
         <a href="#why" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Why Wely</a>
         <a href="#bundle-size" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Bundle Size</a>
         <a href="#quickstart" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Quick Start</a>
+        <a href="#dev" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Dev Mode</a>
         <a href="#define" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Define</a>
         <a href="#composition" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Composition</a>
         <a href="#demo" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Demo</a>
@@ -140,6 +141,23 @@ npm run dev      # playground at localhost:5173
 npm run build    # library → dist/wely.es.js + dist/wely.umd.js
 npm run test
 npm run test:run</code></pre>
+    </section>
+
+    <section id="dev" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Dev Mode &amp; Playground</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4"><code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely dev</code> starts a Vite dev server with hot reload. On first run (when no <code>vite.config</code> exists), the CLI creates the playground files:</p>
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-sm">
+          <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td><code>index.html</code></td><td>Playground page with <code>#app</code> container</td></tr>
+            <tr><td><code>src/playground/main.ts</code></td><td>Entry that imports components and renders each automatically</td></tr>
+            <tr><td><code>src/styles/tailwind.css</code></td><td>Tailwind entry with <code>@source</code> for component templates</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Auto-rendering:</strong> The playground uses <code>getAllComponents()</code> to list every registered component and renders each in its own section. When you add a new component with <code>wely create</code>, it appears in the playground immediately (HMR). No manual HTML edits needed.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>Works everywhere:</strong> With <code>vite.config</code> (Wely repo), the existing playground is used. Without it (consumer project), the CLI scaffolds the minimal setup and uses <code>vite.dev.config.ts</code> from the package.</p>
     </section>
 
     <section id="define" class="doc-section mb-16">
@@ -297,13 +315,13 @@ wely page                    # → docs/</code></pre>
         <table class="w-full text-sm">
           <thead><tr><th>Command</th><th>Output</th><th>Use case</th></tr></thead>
           <tbody class="text-zinc-600 dark:text-zinc-400">
-            <tr><td><code>wely build</code> (no vite.config)</td><td>wely.bundle.*.js</td><td>Consumer project — runtime + kendi componentleri</td></tr>
-            <tr><td><code>wely build</code> (with vite.config)</td><td>wely.es.js, wely.umd.js</td><td>Library — sadece runtime (paketleme)</td></tr>
+            <tr><td><code>wely build</code> (no vite.config)</td><td>wely.bundle.*.js</td><td>Consumer project — runtime + your own components</td></tr>
+            <tr><td><code>wely build</code> (with vite.config)</td><td>wely.es.js, wely.umd.js</td><td>Library — runtime only (packaging)</td></tr>
           </tbody>
         </table>
       </div>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Bundle: drop-in script. Library: <code>import { defineComponent, html } from 'welyjs'</code>.</p>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Chunked: <code>&lt;script type="module" src="wely.chunked.es.js"&gt;&lt;/script&gt;</code> — tarayıcı vendor, runtime, components chunk'larını paralel yükler; cache avantajı sağlar.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Chunked: <code>&lt;script type="module" src="wely.chunked.es.js"&gt;&lt;/script&gt;</code> — the browser loads vendor, runtime, and component chunks in parallel; provides cache benefits.</p>
     </section>
 
     <section id="styling" class="doc-section mb-16">

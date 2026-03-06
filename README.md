@@ -109,6 +109,20 @@ wely dev                     # playground at localhost:5173
 
 On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/wely-components/index.ts`, and other files as needed. The components directory defaults to `src/wely-components` (configurable via `package.json`).
 
+### Dev mode & playground
+
+`wely dev` starts a Vite dev server with a hot-reloading playground. On first run (when no `vite.config` exists), the CLI creates:
+
+| File | Purpose |
+|------|---------|
+| `index.html` | Playground page with `#app` container |
+| `src/playground/main.ts` | Entry that imports components and renders each via `getAllComponents()` |
+| `src/styles/tailwind.css` | Tailwind entry with `@source` for component templates |
+
+**Auto-rendering:** All registered components are rendered automatically. Each `<w-*>` tag gets its own section with a label. When you add a new component with `wely create`, it appears in the playground immediately (HMR). No manual HTML edits needed.
+
+**With or without vite.config:** If the project has no `vite.config`, Wely uses its built-in `vite.dev.config.ts`. If you have a custom `vite.config`, `wely dev` uses that instead.
+
 ### Full repo (Wely development)
 
 ```bash
@@ -719,6 +733,8 @@ wely test --run
 npm run test:e2e     # CLI + build output e2e tests
 npm run test:browser # Playwright — real browser render tests
 ```
+
+**`wely dev`** — Starts the playground at `localhost:5173` (or next available port). Creates `index.html`, `src/playground/main.ts`, and `src/styles/tailwind.css` on first run. All components are auto-rendered; new components added with `wely create` appear via HMR.
 
 Run via npm script:
 
