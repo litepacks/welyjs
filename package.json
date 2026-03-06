@@ -1,6 +1,6 @@
 {
   "name": "welyjs",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "description": "Lightweight Web Component framework powered by a single defineComponent() factory",
   "main": "./dist/wely.umd.js",
