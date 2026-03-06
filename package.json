@@ -41,6 +41,7 @@
     "Safari >= 16.4",
     "Edge >= 79"
   ],
+  "wely": { "componentsDir": "src/components" },
   "sideEffects": ["./src/components/**", "./src/bundle.ts", "./dist/wely.bundle.es.js", "./dist/wely.bundle.umd.js"],
   "license": "MIT",
   "dependencies": {

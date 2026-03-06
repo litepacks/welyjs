@@ -117,7 +117,7 @@ wely build                   # → dist/wely.bundle.es.js, dist/wely.bundle.umd.
 wely dev                     # playground at localhost:5173
 ```
 
-On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/components/index.ts`, and other files as needed.
+On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/wely-components/index.ts`, and other files as needed. The components directory defaults to `src/wely-components` (configurable via `package.json`).
 
 ### Full repo (Wely development)
 
@@ -652,7 +652,17 @@ wely init
 npm install
 ```
 
-On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/components/index.ts`, and other files as needed.
+On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/wely-components/index.ts`, and other files as needed.
+
+**Components directory** — Components are created in `src/wely-components` by default (Wely-branded path to avoid collisions). Override via `package.json`:
+
+```json
+{
+  "wely": { "componentsDir": "src/components" }
+}
+```
+
+This setting is used by `create`, `sync`, `list`, `docs`, `build`, and `dev` commands.
 
 ### Component management
 
@@ -666,7 +676,7 @@ wely create w-user-list --props name:String,age:Number --actions refresh,delete
 # List all components
 wely list
 
-# Regenerate src/components/index.ts from existing files
+# Regenerate components index from existing files
 wely sync
 
 # Generate COMPONENTS.md from component source files
@@ -676,7 +686,7 @@ wely docs
 wely docs --out docs/api.md
 ```
 
-`create` generates the file in `src/components/`, pre-filled with the `defineComponent` boilerplate, and auto-updates `index.ts`.
+`create` generates the file in the components directory (default `src/wely-components`), pre-filled with the `defineComponent` boilerplate, and auto-updates `index.ts`.
 
 `sync` scans the components directory and regenerates the barrel index so every `w-*.ts` file is imported automatically.
 

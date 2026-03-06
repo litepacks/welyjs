@@ -2,13 +2,30 @@
 
 import { execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { basename, join, resolve } from 'node:path'
+import { basename, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = process.cwd()
 const WELY_PKG = resolve(fileURLToPath(import.meta.url), '..', '..')
 const DIST = join(ROOT, 'dist')
-const COMPONENTS_DIR = join(ROOT, 'src', 'components')
+const DEFAULT_COMPONENTS_DIR = 'src/wely-components'
+
+function getComponentsDir() {
+  try {
+    const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8'))
+    const dir = pkg.wely?.componentsDir ?? DEFAULT_COMPONENTS_DIR
+    return resolve(ROOT, dir)
+  } catch {
+    return join(ROOT, DEFAULT_COMPONENTS_DIR)
+  }
+}
+
+function getComponentsImportPath() {
+  const dir = getComponentsDir()
+  const srcDir = join(ROOT, 'src')
+  const rel = relative(srcDir, dir).replace(/\\/g, '/')
+  return rel.startsWith('..') ? rel : './' + rel
+}
 
 const [, , command, ...args] = process.argv
 
@@ -71,6 +88,8 @@ function build() {
 
 function ensureConsumerFiles() {
   const created = []
+  const componentsDir = getComponentsDir()
+  const componentsImport = getComponentsImportPath()
 
   const bundlePath = join(ROOT, 'src', 'bundle.ts')
   if (!existsSync(bundlePath)) {
@@ -80,16 +99,16 @@ function ensureConsumerFiles() {
  * Built with \`wely build\` to produce a single file you can drop into any page.
  */
 export * from 'welyjs'
-import './components'
+import '${componentsImport}'
 `)
     created.push('src/bundle.ts')
   }
 
-  mkdirSync(join(ROOT, 'src', 'components'), { recursive: true })
-  const componentsIndexPath = join(ROOT, 'src', 'components', 'index.ts')
+  mkdirSync(componentsDir, { recursive: true })
+  const componentsIndexPath = join(componentsDir, 'index.ts')
   if (!existsSync(componentsIndexPath)) {
     writeFileSync(componentsIndexPath, '// no components yet\n')
-    created.push('src/components/index.ts')
+    created.push(relative(ROOT, componentsDir).replace(/\\/g, '/') + '/index.ts')
   }
 
   if (created.length > 0) {
@@ -120,17 +139,27 @@ export default defineConfig({
       type: 'module',
       scripts: { dev: 'vite', build: 'vite build' },
       dependencies: { welyjs: '^0.0.2' },
+      wely: { componentsDir: DEFAULT_COMPONENTS_DIR },
     }
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
     created.push('package.json')
   } else {
     try {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+      let changed = false
       if (!pkg.dependencies?.welyjs) {
         pkg.dependencies = pkg.dependencies ?? {}
         pkg.dependencies.welyjs = pkg.dependencies.welyjs ?? '^0.0.2'
+        changed = true
+      }
+      if (!pkg.wely?.componentsDir) {
+        pkg.wely = pkg.wely ?? {}
+        pkg.wely.componentsDir = DEFAULT_COMPONENTS_DIR
+        changed = true
+      }
+      if (changed) {
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
-        created.push('package.json (added welyjs)')
+        created.push('package.json')
       }
     } catch (_) {}
   }
@@ -235,7 +264,8 @@ function create() {
 
   ensureComponentsDir()
 
-  const filePath = join(COMPONENTS_DIR, `${tag}.ts`)
+  const componentsDir = getComponentsDir()
+  const filePath = join(componentsDir, `${tag}.ts`)
 
   if (existsSync(filePath) && !flags.force) {
     console.error(`  ${tag}.ts already exists. Use --force to overwrite.\n`)
@@ -247,7 +277,8 @@ function create() {
 
   const source = generateComponent(tag, propsInput, actionsInput)
   writeFileSync(filePath, source)
-  console.log(`\n  Created src/components/${tag}.ts\n`)
+  const relPath = join(getComponentsDirRel(), `${tag}.ts`)
+  console.log(`\n  Created ${relPath}\n`)
 
   syncIndex()
 }
@@ -403,16 +434,18 @@ function ensureDevFiles() {
   }
   if (!existsSync(join(ROOT, 'src', 'playground', 'main.ts'))) {
     mkdirSync(join(ROOT, 'src', 'playground'), { recursive: true })
+    const componentsRel = relative(join(ROOT, 'src', 'playground'), getComponentsDir()).replace(/\\/g, '/')
     writeFileSync(join(ROOT, 'src', 'playground', 'main.ts'), `import '../../wely.config'
-import '../components'
+import '${componentsRel}'
 console.log('[wely] Playground loaded')
 `)
     created.push('src/playground/main.ts')
   }
   if (!existsSync(join(ROOT, 'src', 'styles', 'tailwind.css'))) {
     mkdirSync(join(ROOT, 'src', 'styles'), { recursive: true })
+    const componentsRel = relative(join(ROOT, 'src', 'styles'), getComponentsDir()).replace(/\\/g, '/')
     writeFileSync(join(ROOT, 'src', 'styles', 'tailwind.css'), `@import "tailwindcss";
-@source "../components/**/*.ts";
+@source "${componentsRel}/**/*.ts";
 @source "../**/*.html";
 `)
     created.push('src/styles/tailwind.css')
