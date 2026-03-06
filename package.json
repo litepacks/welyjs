@@ -1,6 +1,6 @@
 {
   "name": "welyjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "description": "Lightweight Web Component framework powered by a single defineComponent() factory",
   "main": "./dist/wely.umd.js",
@@ -44,6 +44,8 @@
   "wely": { "componentsDir": "src/components" },
   "sideEffects": ["./src/components/**", "./src/bundle.ts", "./dist/wely.bundle.es.js", "./dist/wely.bundle.umd.js"],
   "license": "MIT",
+  "repository": "https://github.com/litepacks/welyjs",
+  "homepage": "https://litepacks.github.io/welyjs/",
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "lit": "^3.3.2",
