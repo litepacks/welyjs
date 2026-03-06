@@ -1,12 +1,7 @@
 /**
- * Bundle entry — exports runtime API + registers all components.
+ * Bundle entry — exports runtime API only.
+ * Consumers add their own components via src/components/ and their bundle.ts.
  *
- * Build with `wely build --bundle` to produce a single file
- * that consumers can drop into any page:
- *
- *   <script src="wely.bundle.umd.js"></script>
- *   <w-counter start="5"></w-counter>
+ * For tests and docs demo, use demo-bundle.ts instead.
  */
-
 export * from './runtime'
-import './components'

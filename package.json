@@ -41,7 +41,7 @@
     "Safari >= 16.4",
     "Edge >= 79"
   ],
-  "sideEffects": false,
+  "sideEffects": ["./src/components/**", "./src/bundle.ts", "./dist/wely.bundle.es.js", "./dist/wely.bundle.umd.js"],
   "license": "MIT",
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",

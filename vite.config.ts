@@ -37,7 +37,7 @@ export default defineConfig({
     lib:
       isBundle || isChunks
         ? {
-            entry: resolve(__dirname, 'src/bundle.ts'),
+            entry: resolve(__dirname, 'src/demo-bundle.ts'),
             name: 'Wely',
             fileName: (format) => (isChunks ? 'wely.chunked.es' : `wely.bundle.${format}`) + '.js',
             formats: isChunks ? ['es'] : ['es', 'umd'],
