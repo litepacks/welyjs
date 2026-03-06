@@ -82,25 +82,15 @@ Wely produces minimal bundles. Runtime includes Lit, our API (defineComponent, s
 
 | Build | Size (min+gzip) |
 |-------|-----------------|
-| Runtime only (`wely.es.js`) | **12.8 KB** |
-| 1 component (w-button) | **13.2 KB** |
-| 2 components (+ w-counter) | **13.5 KB** |
-| 3 components (+ w-counter-card) | **13.7 KB** |
-| 5 components (+ w-pokemon-grid, w-user-list) | **15.0 KB** |
+| Runtime only (`wely.es.js`) | **13 KB** |
+| 1 component (w-button) | **13.3 KB** |
+| 2 components (+ w-counter) | **13.6 KB** |
+| 3 components (+ w-counter-card) | **14 KB** |
+| 5 components (+ w-pokemon-grid, w-user-list) | **15 KB** |
 
-**Per-component overhead:** ~1–2 KB for simple components.
+**Per-component overhead:** ~0.4–0.5 KB for simple components.
 
-**Framework comparison** (min+gzip, typical runtime only):
-
-| Framework | Size |
-|-----------|------|
-| React + React-DOM | ~90 KB |
-| Vue 3 | ~34 KB |
-| Lit | ~6 KB |
-| Preact | ~4 KB |
-| **Wely (runtime + 5 components)** | **~15 KB** |
-
-Wely outputs **native Web Components** — no extra framework at the consumer. A single bundle includes everything: runtime, components, HTTP client, state management, and Tailwind. Compare that to a typical React app: React + React-DOM + UI library can easily exceed 200 KB.
+**Pay for what you use** — Wely bundles only what you import. Add one component → ~13 KB. Add five → ~15 KB. No framework runtime at the consumer; output is native Web Components. Tree-shaking keeps the bundle minimal: unused components never land in the final file.
 
 ## Quick Start
 
@@ -761,7 +751,7 @@ Then push and enable: **Settings → Pages → Source: Deploy from a branch → 
 
 | Output | Description |
 |--------|-------------|
-| `wely.es.js` / `wely.umd.js` | Runtime (12.8 KB gzip) — `defineComponent`, store, fetch, resource, Tailwind |
+| `wely.es.js` / `wely.umd.js` | Runtime (13 KB gzip) — `defineComponent`, store, fetch, resource, Tailwind |
 
 ```ts
 import { defineComponent, html } from 'welyjs'
