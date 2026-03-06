@@ -95,6 +95,17 @@ function ensureConsumerFiles() {
   const componentsDir = getComponentsDir()
   const componentsImport = getComponentsImportPath()
 
+  const welyConfigPath = join(ROOT, 'wely.config.ts')
+  if (!existsSync(welyConfigPath)) {
+    writeFileSync(welyConfigPath, `import { defineConfig } from 'welyjs'
+
+export default defineConfig({
+  appName: 'My App',
+})
+`)
+    created.push('wely.config.ts')
+  }
+
   const bundlePath = join(ROOT, 'src', 'bundle.ts')
   if (!existsSync(bundlePath)) {
     mkdirSync(join(ROOT, 'src'), { recursive: true })
@@ -440,8 +451,25 @@ function ensureDevFiles() {
     mkdirSync(join(ROOT, 'src', 'playground'), { recursive: true })
     const componentsRel = relative(join(ROOT, 'src', 'playground'), getComponentsDir()).replace(/\\/g, '/')
     writeFileSync(join(ROOT, 'src', 'playground', 'main.ts'), `import '../../wely.config'
-import '${componentsRel}'
-console.log('[wely] Playground loaded')
+import { getAllComponents } from 'welyjs'
+
+async function init() {
+  await import('${componentsRel}')
+  const app = document.getElementById('app')
+  if (!app) return
+  for (const [tag] of getAllComponents()) {
+    const section = document.createElement('section')
+    section.className = 'mb-8 p-4 border border-zinc-200 rounded-lg bg-white'
+    const label = document.createElement('h2')
+    label.className = 'text-base font-semibold text-zinc-700 mb-3'
+    label.textContent = \`<\${tag}>\`
+    section.appendChild(label)
+    const el = document.createElement(tag)
+    section.appendChild(el)
+    app.appendChild(section)
+  }
+}
+init()
 `)
     created.push('src/playground/main.ts')
   }
