@@ -27,6 +27,10 @@ function getComponentsImportPath() {
   return rel.startsWith('..') ? rel : './' + rel
 }
 
+function getComponentsDirRel() {
+  return relative(ROOT, getComponentsDir()).replace(/\\/g, '/')
+}
+
 const [, , command, ...args] = process.argv
 
 const commands = {
@@ -300,7 +304,7 @@ function list() {
 
   console.log(`\n  ${tags.length} component(s):\n`)
   for (const tag of tags) {
-    const fp = join(COMPONENTS_DIR, `${tag}.ts`)
+    const fp = join(getComponentsDir(), `${tag}.ts`)
     const lines = readFileSync(fp, 'utf-8').split('\n').length
     console.log(`    ${tag}  (${lines} lines)`)
   }
@@ -332,7 +336,7 @@ function docs() {
   const details = []
 
   for (const tag of tags) {
-    const fp = join(COMPONENTS_DIR, `${tag}.ts`)
+    const fp = join(getComponentsDir(), `${tag}.ts`)
     const src = readFileSync(fp, 'utf-8')
     const componentProps = parseComponentProps(src)
     const componentActions = parseComponentActions(src)
@@ -617,8 +621,9 @@ function generateComponent(tag, propsInput, actionsInput) {
 // ---------------------------------------------------------------------------
 
 function scanComponents() {
-  if (!existsSync(COMPONENTS_DIR)) return []
-  return readdirSync(COMPONENTS_DIR)
+  const dir = getComponentsDir()
+  if (!existsSync(dir)) return []
+  return readdirSync(dir)
     .filter((f) => f.endsWith('.ts') && f !== 'index.ts' && !f.endsWith('.test.ts') && !f.endsWith('.spec.ts'))
     .map((f) => f.replace(/\.ts$/, ''))
     .sort()
@@ -628,13 +633,14 @@ function syncIndex() {
   const tags = scanComponents()
   const imports = tags.map((t) => `import './${t}'`).join('\n')
   const content = imports ? `${imports}\n` : '// no components yet\n'
-  writeFileSync(join(COMPONENTS_DIR, 'index.ts'), content)
+  writeFileSync(join(getComponentsDir(), 'index.ts'), content)
   return tags.length
 }
 
 function ensureComponentsDir() {
-  if (!existsSync(COMPONENTS_DIR)) {
-    mkdirSync(COMPONENTS_DIR, { recursive: true })
+  const dir = getComponentsDir()
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true })
   }
 }
 

@@ -264,6 +264,7 @@ Registers a native custom element. Accepts a `ComponentDef` object:
 |---|---|---|
 | `tag` | `string` | Custom element tag name (must contain a hyphen) |
 | `props` | `Record<string, PropType>` | Attribute-synced properties (`String`, `Number`, `Boolean`, `Array`, `Object`) |
+| `devInfo` | `boolean \| { version?: string }` | When `true` (default), adds `data-wely-version` and `data-wely-mounted` attributes for dev tools. Set `false` to disable. Pass `{ version: '1.2.3' }` to override per component. |
 | `styles` | `CSSResult \| CSSResult[]` | Component-scoped styles via Lit's `css` helper |
 | `state()` | `() => S` | Factory that returns initial reactive state |
 | `actions` | `Record<string, (ctx) => void>` | Named action handlers, available as `ctx.actions.*` |
@@ -432,6 +433,7 @@ import { defineConfig } from './src/runtime'
 
 export default defineConfig({
   appName: 'My App',
+  version: '1.0.0',  // used for data-wely-version in dev tools (when devInfo is enabled)
   apiURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000',
   debug: import.meta.env.DEV,
   theme: import.meta.env.VITE_THEME ?? 'light',

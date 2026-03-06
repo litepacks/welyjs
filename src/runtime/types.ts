@@ -108,4 +108,9 @@ export interface ComponentDef<
   connected?: (ctx: ComponentContext<P, S, A>) => void
   /** Called on every `disconnectedCallback`. */
   disconnected?: (ctx: ComponentContext<P, S, A>) => void
+  /**
+   * When true (default), adds `data-wely-version` and `data-wely-mounted` attributes for dev tools.
+   * Set to `false` to disable. Pass `{ version: '1.2.3' }` to override version per component.
+   */
+  devInfo?: boolean | { version?: string }
 }

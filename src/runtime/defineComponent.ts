@@ -145,9 +145,21 @@ export function defineComponent<
         this._ctx = this._buildCtx()
         if (def.setup) def.setup(this._ctx)
         this._setupDone = true
+        this._applyDevInfo()
       }
 
       if (def.connected) def.connected(this._ctx)
+    }
+
+    private _applyDevInfo(): void {
+      if (def.devInfo === false) return
+      const cfg = getConfig()
+      const version =
+        (typeof def.devInfo === 'object' && typeof def.devInfo?.version === 'string' ? def.devInfo.version : undefined) ??
+        (typeof cfg.version === 'string' ? cfg.version : undefined) ??
+        '0.0.0'
+      this.setAttribute('data-wely-version', version)
+      this.setAttribute('data-wely-mounted', new Date().toISOString())
     }
 
     private _adoptTailwind(): void {

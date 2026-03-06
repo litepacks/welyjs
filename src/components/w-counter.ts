@@ -11,6 +11,10 @@ defineComponent({
     return { count: 0 }
   },
 
+  devInfo: {
+    version: '1.0.0',
+  },
+
   setup(ctx) {
     ctx.state.count = Number(ctx.props.start) || 0
   },

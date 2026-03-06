@@ -58,10 +58,10 @@ describe('CLI e2e', () => {
       run(`npm install ${WELY_ROOT}`, tmpDir, { silent: true })
     })
 
-    it('creates component file in src/components', () => {
+    it('creates component file in src/wely-components', () => {
       run(`node ${WELY_BIN} create w-e2e-test --props msg:String`, tmpDir, { silent: true })
 
-      const componentPath = join(tmpDir, 'src', 'components', 'w-e2e-test.ts')
+      const componentPath = join(tmpDir, 'src', 'wely-components', 'w-e2e-test.ts')
       expect(existsSync(componentPath)).toBe(true)
 
       const content = readFileSync(componentPath, 'utf-8')
@@ -71,10 +71,10 @@ describe('CLI e2e', () => {
       expect(content).toContain("from 'welyjs'")
     })
 
-    it('updates src/components/index.ts', () => {
+    it('updates src/wely-components/index.ts', () => {
       run(`node ${WELY_BIN} create w-e2e-bar`, tmpDir, { silent: true })
 
-      const indexPath = join(tmpDir, 'src', 'components', 'index.ts')
+      const indexPath = join(tmpDir, 'src', 'wely-components', 'index.ts')
       expect(existsSync(indexPath)).toBe(true)
       const content = readFileSync(indexPath, 'utf-8')
       expect(content).toContain("w-e2e-bar")
@@ -188,7 +188,7 @@ describe('CLI e2e', () => {
       run(`node ${WELY_BIN} create w-e2e-sync-b`, tmpDir, { silent: true })
       run(`node ${WELY_BIN} sync`, tmpDir, { silent: true })
 
-      const content = readFileSync(join(tmpDir, 'src', 'components', 'index.ts'), 'utf-8')
+      const content = readFileSync(join(tmpDir, 'src', 'wely-components', 'index.ts'), 'utf-8')
       expect(content).toContain('w-e2e-sync-a')
       expect(content).toContain('w-e2e-sync-b')
     })

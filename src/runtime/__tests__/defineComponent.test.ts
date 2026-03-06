@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeAll } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest'
 import { html } from 'lit'
 import { defineComponent } from '../defineComponent'
 import { getComponent } from '../registry'
+import { defineConfig, resetConfig } from '../config'
 
 function wait(ms = 0): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
@@ -201,6 +202,63 @@ describe('defineComponent', () => {
     el.remove()
   })
 
+  it('adds data-wely-* attributes when devInfo is enabled (default)', async () => {
+    resetConfig()
+    defineConfig({ version: '1.2.3' })
+
+    defineComponent({
+      tag: 'w-test-devinfo',
+      render: () => html`<span>ok</span>`,
+    })
+
+    const el = document.createElement('w-test-devinfo')
+    document.body.appendChild(el)
+    await wait(50)
+
+    expect(el.getAttribute('data-wely-version')).toBe('1.2.3')
+    expect(el.getAttribute('data-wely-mounted')).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+
+    el.remove()
+    resetConfig()
+  })
+
+  it('omits data-wely-* when devInfo is false', async () => {
+    defineComponent({
+      tag: 'w-test-devinfo-off',
+      devInfo: false,
+      render: () => html`<span>ok</span>`,
+    })
+
+    const el = document.createElement('w-test-devinfo-off')
+    document.body.appendChild(el)
+    await wait(50)
+
+    expect(el.getAttribute('data-wely-version')).toBeNull()
+    expect(el.getAttribute('data-wely-mounted')).toBeNull()
+
+    el.remove()
+  })
+
+  it('uses component-level version when devInfo.version is set', async () => {
+    resetConfig()
+    defineConfig({ version: 'global-1.0' })
+
+    defineComponent({
+      tag: 'w-test-devinfo-override',
+      devInfo: { version: '2.0.0' },
+      render: () => html`<span>ok</span>`,
+    })
+
+    const el = document.createElement('w-test-devinfo-override')
+    document.body.appendChild(el)
+    await wait(50)
+
+    expect(el.getAttribute('data-wely-version')).toBe('2.0.0')
+
+    el.remove()
+    resetConfig()
+  })
+
   it('setup receives correct initial prop value', async () => {
     let setupStart: number | undefined
 
@@ -226,4 +284,5 @@ describe('defineComponent', () => {
 
     el.remove()
   })
+
 })
