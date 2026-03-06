@@ -92,6 +92,8 @@ Wely produces minimal bundles. Runtime includes Lit, our API (defineComponent, s
 
 **Pay for what you use** — Wely bundles only what you import. Add one component → ~13 KB. Add five → ~15 KB. No framework runtime at the consumer; output is native Web Components. Tree-shaking keeps the bundle minimal: unused components never land in the final file.
 
+**Smaller bundles** — Consumer builds use esbuild minify (fast). For ~5–15% smaller output, add a custom `vite.config` with `minify: 'terser'` and `terser` as a devDependency. The Wely repo uses Terser for published builds.
+
 ## Quick Start
 
 ### Minimal setup (new project)
@@ -702,8 +704,11 @@ wely docs --out docs/api.md
 |---|---|---|---|
 | **Library** (default) | `wely build` | `wely.es.js` + `wely.umd.js` | Wely repo — consumers import runtime |
 | **Bundle** | `wely build --bundle` | `wely.bundle.es.js` + `wely.bundle.umd.js` | Runtime + components in one file |
+| **Chunked** | `wely build --chunks` | `wely.chunked.es.js` + `chunks/*.js` | Vendor, runtime, components split — cache-friendly |
 | **Minimal** | `wely build` (no vite.config) | `wely.bundle.*.js` | Consumer project — bundle by default |
 | **All** | `wely build --all` | Both sets | Publish both variants |
+
+**Chunked build** — Splits output into `vendor` (Lit), `runtime` (Wely API), and `components` (your components). The browser loads chunks in parallel; when you update components, only the components chunk changes. Use: `<script type="module" src="wely.chunked.es.js"></script>`. Copy the entire `dist/` folder (including `chunks/`) when deploying.
 
 ```bash
 # Minimal project (no vite.config) — bundle mode automatically
@@ -712,6 +717,7 @@ wely build
 # Full repo with vite.config
 wely build                  # library only
 wely build --bundle         # runtime + components
+wely build --chunks         # split into vendor, runtime, components
 wely build --all            # both
 
 # Export to another project (builds first by default)
@@ -774,6 +780,8 @@ import { defineComponent, html } from 'welyjs'
 ```
 
 **Consumer project** — With `wely init` + `wely build` (no vite.config), you create a bundle with your own components. `dist/wely.bundle.*.js` contains your runtime plus your components.
+
+**Bundle size optimization** — The default build uses esbuild minify (consumer) or terser (Wely repo). For smaller production bundles: (1) Use `wely build --chunks` — splits vendor/runtime/components so the browser caches Lit and Wely separately; component updates only invalidate the components chunk. (2) With a custom `vite.config`, add `minify: 'terser'` and `terserOptions: { compress: { drop_console: true } }` to strip `console.*` calls — terser typically yields ~5–15% smaller output than esbuild. (3) Ensure `build.target` matches your lowest supported browser to avoid unnecessary polyfills.
 
 ## Browser Support
 

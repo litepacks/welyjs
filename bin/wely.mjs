@@ -63,10 +63,14 @@ handler()
 function build() {
   const flags = parseFlags(args)
   const isBundle = flags.bundle === true
+  const isChunks = flags.chunks === true
   const hasViteConfig = existsSync(join(ROOT, 'vite.config.ts')) || existsSync(join(ROOT, 'vite.config.js'))
 
   if (hasViteConfig) {
-    if (isBundle) {
+    if (isChunks) {
+      console.log('\n  Building (chunked — vendor, runtime, components split)...\n')
+      run(getViteCmd('build --emptyOutDir false'), { env: { ...process.env, WELY_BUILD_MODE: 'chunks' } })
+    } else if (isBundle) {
       console.log('\n  Building (bundle — runtime + components)...\n')
       run(getViteCmd('build'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
     } else if (flags.all === true) {
@@ -79,8 +83,9 @@ function build() {
     }
   } else {
     ensureConsumerFiles()
-    console.log('\n  Building bundle (runtime + components)...\n')
-    run(getViteCmd(`build --config ${join(WELY_PKG, 'vite.library.config.ts')}`))
+    const buildEnv = isChunks ? { ...process.env, WELY_BUILD_MODE: 'chunks' } : process.env
+    console.log(isChunks ? '\n  Building chunked bundle (vendor, runtime, components split)...\n' : '\n  Building bundle (runtime + components)...\n')
+    run(getViteCmd(`build --config ${join(WELY_PKG, 'vite.library.config.ts')}`), { env: buildEnv })
   }
 
   printDist()
@@ -515,6 +520,7 @@ function help() {
 
     build                        Build the library (runtime only by default)
       --bundle                   Include components in output (runtime + components)
+      --chunks                   Split into vendor, runtime, components chunks (cache-friendly)
       --all                      Build both library and bundle
       --export <path>            Also copy output to <path> after building
 

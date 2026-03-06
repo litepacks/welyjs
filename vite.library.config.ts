@@ -8,6 +8,7 @@ import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
 const root = process.cwd()
+const isChunks = process.env.WELY_BUILD_MODE === 'chunks'
 
 export default defineConfig({
   root,
@@ -16,11 +17,24 @@ export default defineConfig({
     target: 'es2020',
     minify: 'esbuild',
     sourcemap: false,
-    rollupOptions: { output: { compact: true } },
+    rollupOptions: {
+      output: {
+        compact: true,
+        ...(isChunks && {
+          chunkFileNames: 'chunks/[name].js',
+          manualChunks(id) {
+            if (id.includes('node_modules/lit')) return 'vendor'
+            if (id.includes('node_modules/welyjs')) return 'runtime'
+            if (id.includes(root) && !id.includes('node_modules')) return 'components'
+          },
+        }),
+      },
+    },
     lib: {
       entry: resolve(root, 'src/bundle.ts'),
       name: 'Wely',
-      fileName: (format) => `wely.bundle.${format}.js`,
+      fileName: (format) => (isChunks ? 'wely.chunked.es' : `wely.bundle.${format}`) + '.js',
+      formats: isChunks ? ['es'] : ['es', 'umd'],
     },
   },
 })

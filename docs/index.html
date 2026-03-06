@@ -292,6 +292,7 @@ wely docs --out docs/api.md
 # Build (minimal project: bundle by default; full repo: library)
 wely build
 wely build --bundle
+wely build --chunks         # vendor, runtime, components split
 wely build --all
 wely build --export ../app/public/vendor/wely
 
@@ -316,12 +317,14 @@ wely page                    # → docs/</code></pre>
           <thead><tr><th>Command</th><th>Output</th><th>Use case</th></tr></thead>
           <tbody class="text-zinc-600 dark:text-zinc-400">
             <tr><td><code>wely build</code> (no vite.config)</td><td>wely.bundle.*.js</td><td>Consumer project — runtime + your own components</td></tr>
+            <tr><td><code>wely build --chunks</code></td><td>wely.chunked.es.js + chunks/*.js</td><td>Vendor, runtime, components split — cache-friendly</td></tr>
             <tr><td><code>wely build</code> (with vite.config)</td><td>wely.es.js, wely.umd.js</td><td>Library — runtime only (packaging)</td></tr>
           </tbody>
         </table>
       </div>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Bundle: drop-in script. Library: <code>import { defineComponent, html } from 'welyjs'</code>.</p>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Chunked: <code>&lt;script type="module" src="wely.chunked.es.js"&gt;&lt;/script&gt;</code> — the browser loads vendor, runtime, and component chunks in parallel; provides cache benefits.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2"><strong>Chunked build:</strong> <code>wely build --chunks</code> splits output into <code>vendor</code> (Lit), <code>runtime</code> (Wely API), and <code>components</code>. Use <code>&lt;script type="module" src="wely.chunked.es.js"&gt;&lt;/script&gt;</code>. Copy the entire <code>dist/</code> folder (including <code>chunks/</code>) when deploying.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>Size optimization:</strong> Default uses esbuild minify. For smaller bundles, use a custom <code>vite.config</code> with <code>minify: 'terser'</code> and <code>terserOptions: { compress: { drop_console: true } }</code> — terser yields ~5–15% smaller output.</p>
     </section>
 
     <section id="styling" class="doc-section mb-16">
