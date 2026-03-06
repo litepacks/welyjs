@@ -156,7 +156,7 @@ npm run test:run</code></pre>
           </tbody>
         </table>
       </div>
-      <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Auto-rendering:</strong> The playground uses <code>getAllComponents()</code> to list every registered component and renders each in its own section. When you add a new component with <code>wely create</code>, it appears in the playground immediately (HMR). No manual HTML edits needed.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Auto-rendering:</strong> The playground uses <code>getAllComponents()</code> to list every registered component and renders each in its own section. When a component has <code>props</code> defined, the playground shows them (e.g. <code>Props: start: Number, label: String</code>) so you can see which attributes to pass. When you add a new component with <code>wely create</code>, it appears in the playground immediately (HMR). No manual HTML edits needed.</p>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>Works everywhere:</strong> With <code>vite.config</code> (Wely repo), the existing playground is used. Without it (consumer project), the CLI scaffolds the minimal setup and uses <code>vite.dev.config.ts</code> from the package.</p>
     </section>
 

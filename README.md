@@ -121,7 +121,7 @@ On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/wely-
 | `src/playground/main.ts` | Entry that imports components and renders each via `getAllComponents()` |
 | `src/styles/tailwind.css` | Tailwind entry with `@source` for component templates |
 
-**Auto-rendering:** All registered components are rendered automatically. Each `<w-*>` tag gets its own section with a label. When you add a new component with `wely create`, it appears in the playground immediately (HMR). No manual HTML edits needed.
+**Auto-rendering:** All registered components are rendered automatically. Each `<w-*>` tag gets its own section with a label. When a component has `props` defined, the playground shows them (e.g. `Props: start: Number, label: String`) so you can see at a glance which attributes to pass. When you add a new component with `wely create`, it appears in the playground immediately (HMR). No manual HTML edits needed.
 
 **With or without vite.config:** If the project has no `vite.config`, Wely uses its built-in `vite.dev.config.ts`. If you have a custom `vite.config`, `wely dev` uses that instead.
 
