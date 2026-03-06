@@ -129,7 +129,7 @@ export function defineComponent<
       if (def.actions) {
         const boundActions = {} as ComponentContext<P, S, A>['actions']
         for (const [name, fn] of Object.entries(def.actions)) {
-          (boundActions as any)[name] = () => (fn as any)(ctx)
+          (boundActions as any)[name] = (event?: Event) => (fn as any)(ctx, event)
         }
         ctx.actions = boundActions
       }

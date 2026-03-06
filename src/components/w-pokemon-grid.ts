@@ -60,8 +60,8 @@ defineComponent({
     refresh(ctx) {
       ;(ctx.state.pokemon as any)?.refetch?.()
     },
-    onSearch(ctx) {
-      const input = ctx.el.shadowRoot?.querySelector('input[type="search"]') as HTMLInputElement | null
+    onSearch(ctx, event) {
+      const input = event?.target as HTMLInputElement | undefined
       ctx.state.search = input?.value ?? ''
     },
   },

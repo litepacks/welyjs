@@ -201,7 +201,7 @@ defineComponent({
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">API Surface</h2>
 
       <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">defineComponent(def)</h3>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Registers a native custom element. Fields: <code>tag</code>, <code>props</code>, <code>devInfo</code>, <code>styles</code>, <code>state()</code>, <code>actions</code>, <code>setup(ctx)</code>, <code>render(ctx)</code>, <code>connected(ctx)</code>, <code>disconnected(ctx)</code>.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2">Registers a native custom element. Fields: <code>tag</code>, <code>props</code>, <code>devInfo</code>, <code>styles</code>, <code>state()</code>, <code>actions</code>, <code>setup(ctx)</code>, <code>render(ctx)</code>, <code>connected(ctx)</code>, <code>disconnected(ctx)</code>. Actions receive <code>(ctx, event?)</code> — with <code>@input</code>, <code>@click</code>, etc., <code>event.target</code> gives the element.</p>
 
       <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">The ctx object</h3>
       <div class="overflow-x-auto">
@@ -211,7 +211,7 @@ defineComponent({
             <tr><td><code>ctx.el</code></td><td>Host HTMLElement</td></tr>
             <tr><td><code>ctx.props</code></td><td>Readonly attribute-synced properties</td></tr>
             <tr><td><code>ctx.state</code></td><td>Auto-reactive state (mutations trigger re-render)</td></tr>
-            <tr><td><code>ctx.actions</code></td><td>Bound action map</td></tr>
+            <tr><td><code>ctx.actions</code></td><td>Bound action map — handlers receive <code>(ctx, event)</code>; <code>event.target</code> for the element</td></tr>
             <tr><td><code>ctx.update()</code></td><td>Manually request re-render</td></tr>
             <tr><td><code>ctx.emit(event, payload?)</code></td><td>Dispatch CustomEvent</td></tr>
             <tr><td><code>ctx.resource(fetcher, opts?)</code></td><td>Async resource bound to lifecycle</td></tr>

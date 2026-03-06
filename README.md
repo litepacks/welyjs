@@ -257,7 +257,7 @@ Registers a native custom element. Accepts a `ComponentDef` object:
 | `devInfo` | `boolean \| { version?: string }` | When `true` (default), adds `data-wely-version` and `data-wely-mounted` attributes for dev tools. Set `false` to disable. Pass `{ version: '1.2.3' }` to override per component. |
 | `styles` | `CSSResult \| CSSResult[]` | Component-scoped styles via Lit's `css` helper |
 | `state()` | `() => S` | Factory that returns initial reactive state |
-| `actions` | `Record<string, (ctx) => void>` | Named action handlers, available as `ctx.actions.*` |
+| `actions` | `Record<string, (ctx, event?) => void>` | Named action handlers. Use in templates: `@input=${ctx.actions.onSearch}` — second param is the DOM event; `event.target` gives the element. |
 | `setup(ctx)` | `(ctx) => void` | Called once when the element first connects |
 | `render(ctx)` | `(ctx) => TemplateResult` | Returns the template (uses `html` tagged literal) |
 | `connected(ctx)` | `(ctx) => void` | Called on every `connectedCallback` |
@@ -272,7 +272,7 @@ Every lifecycle and render function receives a context object:
 | `ctx.el` | Reference to the host `HTMLElement` |
 | `ctx.props` | Readonly proxy to attribute-synced properties |
 | `ctx.state` | Auto-reactive state — mutations trigger re-render automatically |
-| `ctx.actions` | Bound action map from the component definition |
+| `ctx.actions` | Bound action map. When used with `@input`, `@click`, etc., the handler receives `(ctx, event)` — use `event.target` to access the element. |
 | `ctx.update()` | Manually request a re-render (optional, state is already reactive) |
 | `ctx.emit(event, payload?)` | Dispatch a `CustomEvent` with `bubbles` and `composed` |
 | `ctx.resource(fetcher, opts?)` | Create an async resource bound to the component lifecycle |

@@ -28,8 +28,8 @@ export interface ComponentContext<
   state: S
   /** Project-wide config from `wely.config.ts`, read-only at runtime. */
   config: Readonly<Record<string, unknown>>
-  /** Bound action map from the component definition. */
-  actions: { [K in keyof A]: () => void }
+  /** Bound action map. Use in templates: @input=${ctx.actions.onSearch}. Handler receives (ctx, event) — event.target gives the element. */
+  actions: { [K in keyof A]: (event?: Event) => void }
   /** Manually request a re-render. Usually unnecessary — state is already reactive. */
   update: () => void
   /** Dispatch a bubbling, composed `CustomEvent`. */
@@ -88,7 +88,7 @@ export interface ComponentContext<
 export interface ComponentDef<
   P extends Record<string, unknown> = Record<string, unknown>,
   S extends Record<string, unknown> = Record<string, unknown>,
-  A extends Record<string, (ctx: ComponentContext<P, S, any>) => void> = Record<string, (ctx: ComponentContext<P, S>) => void>,
+  A extends Record<string, (ctx: ComponentContext<P, S, any>, event?: Event) => void> = Record<string, (ctx: ComponentContext<P, S>, event?: Event) => void>,
 > {
   /** Custom element tag name. Must contain a hyphen (e.g. `w-button`). */
   tag: string
@@ -98,7 +98,7 @@ export interface ComponentDef<
   styles?: CSSResult | CSSResult[]
   /** Factory that returns the initial reactive state object. */
   state?: () => S
-  /** Named action handlers, available in templates as `ctx.actions.*`. */
+  /** Named action handlers. Signature: (ctx, event?) => void. Use @input=${ctx.actions.onSearch} — event.target gives the element. */
   actions?: A
   /** Called once when the element first connects to the DOM. */
   setup?: (ctx: ComponentContext<P, S, A>) => void

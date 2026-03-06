@@ -70,8 +70,8 @@ defineComponent({
     refresh(ctx) {
       (ctx.state.users as any)?.refetch?.()
     },
-    onSearch(ctx) {
-      const input = ctx.el.shadowRoot?.querySelector('input') as HTMLInputElement | null
+    onSearch(ctx, event) {
+      const input = event?.target as HTMLInputElement | undefined
       userFilterStore.actions.setSearch(input?.value ?? '')
     },
   },
