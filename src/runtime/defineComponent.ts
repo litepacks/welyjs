@@ -146,6 +146,7 @@ export function defineComponent<
         if (def.setup) def.setup(this._ctx)
         this._setupDone = true
         this._applyDevInfo()
+        ;(this as any).$wely = this._ctx
       }
 
       if (def.connected) def.connected(this._ctx)

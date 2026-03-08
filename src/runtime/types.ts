@@ -114,3 +114,14 @@ export interface ComponentDef<
    */
   devInfo?: boolean | { version?: string }
 }
+
+declare global {
+  interface HTMLElement {
+    /** Wely component context — available on any mounted Wely custom element. */
+    $wely?: ComponentContext
+  }
+  interface Window {
+    /** Wely DevTools bridge — helpers for querying component instances. */
+    wely?: import('./bridge').WelyBridge
+  }
+}

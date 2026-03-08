@@ -507,6 +507,41 @@ import { html, css, nothing } from 'welyjs'
 
 These are the only Lit symbols exposed. `LitElement` and all other internals remain hidden.
 
+### Browser Access
+
+Every mounted Wely component exposes its context object on the DOM element as `$wely`. This enables direct programmatic access from browser DevTools, tests, or automation tools (e.g. MCP-based agents).
+
+**Element-level access (`el.$wely`):**
+
+```js
+const el = document.querySelector('w-counter')
+el.$wely.state.count        // read state
+el.$wely.state.count = 10   // write state (triggers re-render)
+el.$wely.actions.increment() // call an action
+el.$wely.props.start         // read props
+el.$wely.emit('my-event', { detail: 42 }) // dispatch event
+```
+
+**Global helper (`window.wely`):**
+
+A convenience API is installed automatically when the runtime loads:
+
+```js
+wely.get('w-counter')        // first matching element's ctx
+wely.getAll('w-counter')     // all matching elements' ctx array
+wely.list()                  // all registered tag names
+```
+
+| Method | Returns | Description |
+|---|---|---|
+| `wely.get(selector)` | `ComponentContext \| undefined` | Context of the first element matching the tag or CSS selector |
+| `wely.getAll(selector)` | `ComponentContext[]` | Contexts of all matching elements |
+| `wely.list()` | `string[]` | All registered component tag names |
+
+**TypeScript support:** `$wely` is typed on `HTMLElement` globally. The `WelyBridge` interface is exported for `window.wely` typing.
+
+**Use with MCP / automation:** Because `window.wely` is a plain JS API, any browser automation tool (Playwright, Puppeteer, Cursor browser MCP) can call `window.wely.get('w-counter').state` via `evaluate()` to read or mutate component state programmatically.
+
 ## Project Structure
 
 ```

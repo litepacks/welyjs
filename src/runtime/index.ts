@@ -9,4 +9,9 @@ export { createResource } from './resource'
 export type { Resource, ResourceOptions, Fetcher } from './resource'
 export { createStore } from './store'
 export type { Store, StoreDef } from './store'
+export { installBridge } from './bridge'
+export type { WelyBridge } from './bridge'
 export { html, css, nothing } from 'lit'
+
+import { installBridge } from './bridge'
+installBridge()

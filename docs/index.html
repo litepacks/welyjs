@@ -43,6 +43,7 @@
         <a href="#cli" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">CLI</a>
         <a href="#build" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Build</a>
         <a href="#styling" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Styling</a>
+        <a href="#browser-access" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Access</a>
         <a href="#browser" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Browser</a>
         <a href="#portability" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Portability</a>
         <a href="#principles" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Principles</a>
@@ -337,6 +338,39 @@ wely page                    # → docs/</code></pre>
         <li>Component-scoped — use <code>styles: css`:host { ... }`</code></li>
       </ul>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2"><strong>Minimal setup:</strong> <code>wely init</code> + <code>wely build</code> — CLI creates <code>tailwind.css</code> with correct <code>@source</code> on first run. <strong>Bundle consumers:</strong> no config — Tailwind baked in.</p>
+    </section>
+
+    <section id="browser-access" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Browser Access</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4">Every mounted Wely component exposes its context on the DOM element as <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">$wely</code>. This enables direct access from DevTools, tests, or automation tools (e.g. MCP-based agents).</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">Element-level access</h3>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto mb-4"><code class="language-javascript">const el = document.querySelector('w-counter')
+el.$wely.state.count        // read state
+el.$wely.state.count = 10   // write state (triggers re-render)
+el.$wely.actions.increment() // call an action
+el.$wely.props.start         // read props
+el.$wely.emit('my-event', { detail: 42 }) // dispatch event</code></pre>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">Global helper — <code>window.wely</code></h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3">Installed automatically when the runtime loads:</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto mb-4"><code class="language-javascript">wely.get('w-counter')        // first matching element's ctx
+wely.getAll('w-counter')     // all matching elements' ctx array
+wely.list()                  // all registered tag names</code></pre>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-sm">
+          <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td><code>wely.get(selector)</code></td><td><code>ComponentContext | undefined</code></td><td>Context of the first element matching the tag or CSS selector</td></tr>
+            <tr><td><code>wely.getAll(selector)</code></td><td><code>ComponentContext[]</code></td><td>Contexts of all matching elements</td></tr>
+            <tr><td><code>wely.list()</code></td><td><code>string[]</code></td><td>All registered component tag names</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-2"><strong>TypeScript:</strong> <code>$wely</code> is typed on <code>HTMLElement</code> globally. The <code>WelyBridge</code> interface is exported for <code>window.wely</code> typing.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>MCP / automation:</strong> Because <code>window.wely</code> is plain JS, any browser automation tool (Playwright, Puppeteer, Cursor browser MCP) can call <code>window.wely.get('w-counter').state</code> via <code>evaluate()</code> to read or mutate component state programmatically.</p>
     </section>
 
     <section id="browser" class="doc-section mb-16">
