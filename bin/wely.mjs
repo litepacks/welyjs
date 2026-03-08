@@ -458,13 +458,42 @@ function ensureDevFiles() {
     writeFileSync(join(ROOT, 'src', 'playground', 'main.ts'), `import '../../wely.config'
 import { getAllComponents } from 'welyjs'
 
-function propTypeName(ctor) {
+function typeName(ctor) {
   if (ctor === Number) return 'Number'
-  if (ctor === String) return 'String'
   if (ctor === Boolean) return 'Boolean'
   if (ctor === Array) return 'Array'
   if (ctor === Object) return 'Object'
   return 'String'
+}
+
+function createPropInput(name, ctor, el) {
+  const row = document.createElement('label')
+  row.className = 'flex items-center gap-2 text-sm'
+  const nameSpan = document.createElement('span')
+  nameSpan.className = 'font-mono text-zinc-600 min-w-[80px]'
+  nameSpan.textContent = name
+  const badge = document.createElement('span')
+  badge.className = 'text-[10px] bg-zinc-100 text-zinc-400 rounded px-1 py-0.5 uppercase tracking-wide'
+  badge.textContent = typeName(ctor)
+  row.appendChild(nameSpan)
+  row.appendChild(badge)
+  if (ctor === Boolean) {
+    const input = document.createElement('input')
+    input.type = 'checkbox'
+    input.className = 'ml-auto h-4 w-4 accent-amber-500'
+    input.checked = el.hasAttribute(name)
+    input.addEventListener('change', () => input.checked ? el.setAttribute(name, '') : el.removeAttribute(name))
+    row.appendChild(input)
+  } else {
+    const input = document.createElement('input')
+    input.type = ctor === Number ? 'number' : 'text'
+    input.className = 'ml-auto flex-1 max-w-[200px] px-2 py-1 border border-zinc-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-amber-400' + (ctor === Array || ctor === Object ? ' font-mono' : '')
+    input.value = el.getAttribute(name) ?? ''
+    input.placeholder = ctor === Number ? '0' : ctor === Array ? '[]' : ctor === Object ? '{}' : 'value'
+    input.addEventListener('input', () => el.setAttribute(name, input.value))
+    row.appendChild(input)
+  }
+  return row
 }
 
 async function init() {
@@ -473,19 +502,24 @@ async function init() {
   if (!app) return
   for (const [tag, def] of getAllComponents()) {
     const section = document.createElement('section')
-    section.className = 'mb-8 p-4 border border-zinc-200 rounded-lg bg-white'
-    const label = document.createElement('h2')
-    label.className = 'text-base font-semibold text-zinc-700 mb-2'
-    label.textContent = \`<\${tag}>\`
-    section.appendChild(label)
-    const props = def.props ?? {}
-    if (Object.keys(props).length > 0) {
-      const propsDesc = document.createElement('p')
-      propsDesc.className = 'text-sm text-zinc-500 mb-3 font-mono'
-      propsDesc.textContent = 'Props: ' + Object.entries(props).map(([k, c]) => \`\${k}: \${propTypeName(c)}\`).join(', ')
-      section.appendChild(propsDesc)
-    }
+    section.className = 'mb-8 p-5 border border-zinc-200 rounded-xl bg-white shadow-sm'
+    const tagLabel = document.createElement('h2')
+    tagLabel.className = 'text-base font-semibold text-zinc-800 mb-3'
+    tagLabel.innerHTML = '<code class="bg-zinc-100 px-2 py-0.5 rounded text-amber-600">&lt;' + tag + '&gt;</code>'
+    section.appendChild(tagLabel)
     const el = document.createElement(tag)
+    const props = def.props ?? {}
+    const entries = Object.entries(props)
+    if (entries.length > 0) {
+      const panel = document.createElement('div')
+      panel.className = 'mb-4 p-3 bg-zinc-50 rounded-lg border border-zinc-100 space-y-2'
+      const title = document.createElement('div')
+      title.className = 'text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'
+      title.textContent = 'Props'
+      panel.appendChild(title)
+      entries.forEach(([k, c]) => panel.appendChild(createPropInput(k, c, el)))
+      section.appendChild(panel)
+    }
     section.appendChild(el)
     app.appendChild(section)
   }
