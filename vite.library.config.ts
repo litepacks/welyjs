@@ -9,11 +9,13 @@ import tailwindcss from '@tailwindcss/vite'
 
 const root = process.cwd()
 const isChunks = process.env.WELY_BUILD_MODE === 'chunks'
+const outDir = process.env.WELY_OUT_DIR || resolve(root, 'dist')
 
 export default defineConfig({
   root,
   plugins: [tailwindcss()],
   build: {
+    outDir,
     target: 'es2020',
     minify: 'esbuild',
     sourcemap: false,

@@ -5,73 +5,135 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wely Playground</title>
   <link rel="stylesheet" href="/src/styles/tailwind.css" />
+  <script>
+    var t = localStorage.getItem('wely-playground-theme');
+    if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches))
+      document.documentElement.setAttribute('data-theme', 'dark');
+  </script>
+  <style>
+    :root {
+      --wp-bg: #fafafa;
+      --wp-fg: #18181b;
+      --wp-muted: #71717a;
+      --wp-subtle: #a1a1aa;
+      --wp-border: #e4e4e7;
+      --wp-surface: #ffffff;
+      --wp-surface2: #f4f4f5;
+      --wp-surface3: #fafafa;
+      --wp-accent: #d97706;
+      --wp-accent2: #f59e0b;
+      --wp-ring: rgba(245,158,11,0.35);
+    }
+    [data-theme="dark"] {
+      --wp-bg: #0a0a0a;
+      --wp-fg: #f4f4f5;
+      --wp-muted: #a1a1aa;
+      --wp-subtle: #71717a;
+      --wp-border: #27272a;
+      --wp-surface: #18181b;
+      --wp-surface2: #27272a;
+      --wp-surface3: #1c1c1f;
+      --wp-accent: #fbbf24;
+      --wp-accent2: #f59e0b;
+      --wp-ring: rgba(251,191,36,0.3);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--wp-bg);
+      color: var(--wp-fg);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      transition: background .2s, color .2s;
+    }
+    .wp-shell { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .wp-header { margin-bottom: 2rem; }
+    .wp-header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; }
+    .wp-header h1 span { font-weight: 300; color: var(--wp-subtle); }
+    .wp-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .wp-search-wrap { position: relative; flex: 1 1 200px; min-width: 160px; max-width: 340px; }
+    .wp-search-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--wp-subtle); display: flex; pointer-events: none;
+    }
+    .wp-search-input {
+      width: 100%; padding: 7px 12px 7px 34px;
+      border: 1px solid var(--wp-border); border-radius: 8px;
+      font-size: 13px; background: var(--wp-surface); color: var(--wp-fg);
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .wp-search-input::placeholder { color: var(--wp-subtle); }
+    .wp-search-input:focus { border-color: var(--wp-accent2); box-shadow: 0 0 0 3px var(--wp-ring); }
+    .wp-count { font-size: 12px; font-family: ui-monospace, monospace; color: var(--wp-subtle); white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .wp-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; padding: 6px 12px; border-radius: 8px;
+      border: 1px solid var(--wp-border); background: var(--wp-surface);
+      color: var(--wp-muted); cursor: pointer; white-space: nowrap;
+      transition: background .15s, color .15s, border-color .15s;
+      user-select: none; line-height: 1;
+    }
+    .wp-btn:hover { background: var(--wp-surface2); color: var(--wp-fg); }
+    .wp-btn svg { flex-shrink: 0; }
+    .wp-list { display: flex; flex-direction: column; gap: 10px; }
+    .wp-section {
+      border: 1px solid var(--wp-border); border-radius: 12px;
+      background: var(--wp-surface); overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      transition: background .2s, border-color .2s;
+    }
+    .wp-section-header {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; text-align: left;
+      background: transparent; border: none; cursor: pointer;
+      color: var(--wp-fg); font: inherit; user-select: none;
+      transition: background .12s;
+    }
+    .wp-section-header:hover { background: var(--wp-surface2); }
+    .wp-arrow { color: var(--wp-subtle); display: flex; flex-shrink: 0; transition: color .12s; }
+    .wp-section-header:hover .wp-arrow { color: var(--wp-fg); }
+    .wp-chevron { display: inline-flex; transition: transform .2s ease; }
+    .wp-chevron.wp-open { transform: rotate(90deg); }
+    .wp-tag {
+      font-size: 13px; font-weight: 600; font-family: ui-monospace, SFMono-Regular, monospace;
+      color: var(--wp-accent); background: var(--wp-surface2);
+      padding: 2px 8px; border-radius: 5px;
+    }
+    .wp-prop-count { margin-left: auto; font-size: 11px; font-family: ui-monospace, monospace; color: var(--wp-subtle); }
+    .wp-section-body { padding: 4px 18px 18px; border-top: 1px solid var(--wp-border); }
+    .wp-props-panel {
+      margin: 10px 0 14px; padding: 10px 12px;
+      background: var(--wp-surface3); border-radius: 8px;
+      border: 1px solid var(--wp-border);
+    }
+    .wp-props-title {
+      font-size: 10px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--wp-subtle); margin-bottom: 8px;
+    }
+    .wp-prop-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; }
+    .wp-prop-name { font-family: ui-monospace, monospace; color: var(--wp-muted); min-width: 70px; }
+    .wp-badge {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+      background: var(--wp-surface2); color: var(--wp-subtle);
+      padding: 1px 5px; border-radius: 4px;
+    }
+    .wp-checkbox { margin-left: auto; width: 16px; height: 16px; accent-color: var(--wp-accent2); cursor: pointer; }
+    .wp-input {
+      margin-left: auto; flex: 1; max-width: 200px;
+      padding: 4px 8px; border: 1px solid var(--wp-border); border-radius: 6px;
+      font-size: 13px; background: var(--wp-surface); color: var(--wp-fg);
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    .wp-input:focus { border-color: var(--wp-accent2); box-shadow: 0 0 0 2px var(--wp-ring); }
+    .wp-mono { font-family: ui-monospace, monospace; }
+  </style>
 </head>
-<body class="bg-zinc-50 text-zinc-900 antialiased">
-  <div class="max-w-2xl mx-auto px-4 py-10">
-    <h1 class="text-2xl font-bold">Wely <span class="font-light text-zinc-400">playground</span></h1>
-    <p class="text-zinc-500 mt-1 mb-8">Test registered w-* components below.</p>
-
-    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
-      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-counter&gt;</h2>
-      <div class="flex items-center gap-4 flex-wrap">
-        <w-counter start="5"></w-counter>
-      </div>
-      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-counter start="5"&gt;&lt;/w-counter&gt;</pre>
-    </section>
-
-    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
-      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-counter&gt; (default)</h2>
-      <div class="flex items-center gap-4 flex-wrap">
-        <w-counter></w-counter>
-      </div>
-      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-counter&gt;&lt;/w-counter&gt;</pre>
-    </section>
-
-    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
-      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-button&gt;</h2>
-      <div class="flex items-center gap-4 flex-wrap">
-        <w-button label="Default"></w-button>
-        <w-button label="Primary" variant="primary"></w-button>
-        <w-button label="Danger" variant="danger"></w-button>
-        <w-button label="Ghost" variant="ghost"></w-button>
-        <w-button label="Disabled" disabled></w-button>
-      </div>
-      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-button label="Default"&gt;&lt;/w-button&gt;
-&lt;w-button label="Primary" variant="primary"&gt;&lt;/w-button&gt;
-&lt;w-button label="Danger" variant="danger"&gt;&lt;/w-button&gt;
-&lt;w-button label="Ghost" variant="ghost"&gt;&lt;/w-button&gt;
-&lt;w-button label="Disabled" disabled&gt;&lt;/w-button&gt;</pre>
-    </section>
-
-    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
-      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-button&gt; with slot</h2>
-      <div class="flex items-center gap-4 flex-wrap">
-        <w-button>Slotted content</w-button>
-      </div>
-      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-button&gt;Slotted content&lt;/w-button&gt;</pre>
-    </section>
-
-    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
-      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-counter-card&gt; (composed component)</h2>
-      <div class="flex items-center gap-4 flex-wrap">
-        <w-counter-card title="Score" start="10"></w-counter-card>
-        <w-counter-card title="Lives" start="3"></w-counter-card>
-      </div>
-      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-counter-card title="Score" start="10"&gt;&lt;/w-counter-card&gt;
-&lt;w-counter-card title="Lives" start="3"&gt;&lt;/w-counter-card&gt;</pre>
-    </section>
-
-    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
-      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-pokemon-grid&gt; (PokéAPI)</h2>
-      <w-pokemon-grid limit="12"></w-pokemon-grid>
-      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-pokemon-grid limit="12"&gt;&lt;/w-pokemon-grid&gt;</pre>
-    </section>
-
-    <section class="mb-8 p-6 border border-zinc-200 rounded-lg bg-white">
-      <h2 class="text-base font-semibold text-zinc-700 mb-3">&lt;w-user-list&gt; (async resource + shared store)</h2>
-      <w-user-list endpoint="https://jsonplaceholder.typicode.com/users"></w-user-list>
-      <pre class="mt-4 bg-zinc-100 px-4 py-3 rounded-md text-sm text-zinc-600 overflow-x-auto">&lt;w-user-list endpoint="https://jsonplaceholder.typicode.com/users"&gt;&lt;/w-user-list&gt;</pre>
-    </section>
+<body>
+  <div class="wp-shell">
+    <div class="wp-header">
+      <h1>Wely <span>playground</span></h1>
+    </div>
+    <div id="app"></div>
   </div>
 
   <script type="module" src="/src/playground/main.ts"></script>

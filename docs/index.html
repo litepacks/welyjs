@@ -274,6 +274,13 @@ defineComponent({ tag: 'w-card', devInfo: { version: '2.0.0' }, render: () => ht
   "wely": { "componentsDir": "src/components" }
 }</code></pre>
       <p class="text-zinc-500 dark:text-zinc-500 text-xs">Used by <code>create</code>, <code>sync</code>, <code>list</code>, <code>docs</code>, <code>build</code>, <code>dev</code>.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mt-6 mb-2">outDir — Build output folder</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm">Override the default <code>dist</code> output directory via <code>package.json</code>:</p>
+      <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-json">{
+  "wely": { "componentsDir": "src/components", "outDir": "build" }
+}</code></pre>
+      <p class="text-zinc-500 dark:text-zinc-500 text-xs">Used by <code>build</code>, <code>export</code>, <code>page</code>. Both the library config and CLI respect this value.</p>
     </section>
 
     <section id="cli" class="doc-section mb-16">

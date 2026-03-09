@@ -7,17 +7,29 @@ import { fileURLToPath } from 'node:url'
 
 const ROOT = process.cwd()
 const WELY_PKG = resolve(fileURLToPath(import.meta.url), '..', '..')
-const DIST = join(ROOT, 'dist')
 const DEFAULT_COMPONENTS_DIR = 'src/wely-components'
+const DEFAULT_OUT_DIR = 'dist'
+
+function getWelyConfig() {
+  try {
+    return JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8')).wely ?? {}
+  } catch {
+    return {}
+  }
+}
 
 function getComponentsDir() {
-  try {
-    const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8'))
-    const dir = pkg.wely?.componentsDir ?? DEFAULT_COMPONENTS_DIR
-    return resolve(ROOT, dir)
-  } catch {
-    return join(ROOT, DEFAULT_COMPONENTS_DIR)
-  }
+  const dir = getWelyConfig().componentsDir ?? DEFAULT_COMPONENTS_DIR
+  return resolve(ROOT, dir)
+}
+
+function getOutDir() {
+  const dir = getWelyConfig().outDir ?? DEFAULT_OUT_DIR
+  return resolve(ROOT, dir)
+}
+
+function getOutDirRel() {
+  return relative(ROOT, getOutDir()).replace(/\\/g, '/') || '.'
 }
 
 function getComponentsImportPath() {
@@ -83,7 +95,11 @@ function build() {
     }
   } else {
     ensureConsumerFiles()
-    const buildEnv = isChunks ? { ...process.env, WELY_BUILD_MODE: 'chunks' } : process.env
+    const buildEnv = {
+      ...process.env,
+      ...(isChunks && { WELY_BUILD_MODE: 'chunks' }),
+      WELY_OUT_DIR: getOutDir(),
+    }
     console.log(isChunks ? '\n  Building chunked bundle (vendor, runtime, components split)...\n' : '\n  Building bundle (runtime + components)...\n')
     run(getViteCmd(`build --config ${join(WELY_PKG, 'vite.library.config.ts')}`), { env: buildEnv })
   }
@@ -207,8 +223,9 @@ function exportCmd() {
     run(getViteCmd('build'))
   }
 
-  if (!existsSync(DIST)) {
-    console.error('  dist/ not found. Run "wely build" first.\n')
+  const outDir = getOutDir()
+  if (!existsSync(outDir)) {
+    console.error(`  ${getOutDirRel()}/ not found. Run "wely build" first.\n`)
     process.exit(1)
   }
 
@@ -225,7 +242,7 @@ function exportCmd() {
 function pageCmd() {
   const pageDir = join(ROOT, 'page')
   const docsDir = join(ROOT, 'docs')
-  const distDir = join(ROOT, 'dist')
+  const distDir = getOutDir()
 
   if (!existsSync(pageDir)) {
     console.error('  page/ not found.\n')
@@ -423,122 +440,22 @@ function dev() {
   const hasViteConfig = existsSync(join(ROOT, 'vite.config.ts')) || existsSync(join(ROOT, 'vite.config.js'))
   if (!hasViteConfig) {
     ensureConsumerFiles()
-    ensureDevFiles()
     console.log('\n  Starting dev server...\n')
-    run(getViteCmd(`--config ${join(WELY_PKG, 'vite.dev.config.ts')}`), { stdio: 'inherit' })
+    run(getViteCmd(`--config ${join(WELY_PKG, 'vite.dev.config.ts')}`), {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        WELY_COMPONENTS_DIR: getComponentsDir(),
+        WELY_CONFIG_PATH: join(ROOT, 'wely.config.ts'),
+      },
+    })
   } else {
     console.log('\n  Starting dev server...\n')
     run(getViteCmd(), { stdio: 'inherit' })
   }
 }
 
-function ensureDevFiles() {
-  const created = []
-  if (!existsSync(join(ROOT, 'index.html'))) {
-    writeFileSync(join(ROOT, 'index.html'), `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wely Playground</title>
-  <link rel="stylesheet" href="/src/styles/tailwind.css" />
-</head>
-<body class="bg-zinc-50 text-zinc-900 antialiased p-8">
-  <h1 class="text-2xl font-bold mb-6">Wely <span class="font-light text-zinc-400">playground</span></h1>
-  <div id="app"></div>
-  <script type="module" src="/src/playground/main.ts"></script>
-</body>
-</html>
-`)
-    created.push('index.html')
-  }
-  if (!existsSync(join(ROOT, 'src', 'playground', 'main.ts'))) {
-    mkdirSync(join(ROOT, 'src', 'playground'), { recursive: true })
-    const componentsRel = relative(join(ROOT, 'src', 'playground'), getComponentsDir()).replace(/\\/g, '/')
-    writeFileSync(join(ROOT, 'src', 'playground', 'main.ts'), `import '../../wely.config'
-import { getAllComponents } from 'welyjs'
 
-function typeName(ctor) {
-  if (ctor === Number) return 'Number'
-  if (ctor === Boolean) return 'Boolean'
-  if (ctor === Array) return 'Array'
-  if (ctor === Object) return 'Object'
-  return 'String'
-}
-
-function createPropInput(name, ctor, el) {
-  const row = document.createElement('label')
-  row.className = 'flex items-center gap-2 text-sm'
-  const nameSpan = document.createElement('span')
-  nameSpan.className = 'font-mono text-zinc-600 min-w-[80px]'
-  nameSpan.textContent = name
-  const badge = document.createElement('span')
-  badge.className = 'text-[10px] bg-zinc-100 text-zinc-400 rounded px-1 py-0.5 uppercase tracking-wide'
-  badge.textContent = typeName(ctor)
-  row.appendChild(nameSpan)
-  row.appendChild(badge)
-  if (ctor === Boolean) {
-    const input = document.createElement('input')
-    input.type = 'checkbox'
-    input.className = 'ml-auto h-4 w-4 accent-amber-500'
-    input.checked = el.hasAttribute(name)
-    input.addEventListener('change', () => input.checked ? el.setAttribute(name, '') : el.removeAttribute(name))
-    row.appendChild(input)
-  } else {
-    const input = document.createElement('input')
-    input.type = ctor === Number ? 'number' : 'text'
-    input.className = 'ml-auto flex-1 max-w-[200px] px-2 py-1 border border-zinc-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-amber-400' + (ctor === Array || ctor === Object ? ' font-mono' : '')
-    input.value = el.getAttribute(name) ?? ''
-    input.placeholder = ctor === Number ? '0' : ctor === Array ? '[]' : ctor === Object ? '{}' : 'value'
-    input.addEventListener('input', () => el.setAttribute(name, input.value))
-    row.appendChild(input)
-  }
-  return row
-}
-
-async function init() {
-  await import('${componentsRel}')
-  const app = document.getElementById('app')
-  if (!app) return
-  for (const [tag, def] of getAllComponents()) {
-    const section = document.createElement('section')
-    section.className = 'mb-8 p-5 border border-zinc-200 rounded-xl bg-white shadow-sm'
-    const tagLabel = document.createElement('h2')
-    tagLabel.className = 'text-base font-semibold text-zinc-800 mb-3'
-    tagLabel.innerHTML = '<code class="bg-zinc-100 px-2 py-0.5 rounded text-amber-600">&lt;' + tag + '&gt;</code>'
-    section.appendChild(tagLabel)
-    const el = document.createElement(tag)
-    const props = def.props ?? {}
-    const entries = Object.entries(props)
-    if (entries.length > 0) {
-      const panel = document.createElement('div')
-      panel.className = 'mb-4 p-3 bg-zinc-50 rounded-lg border border-zinc-100 space-y-2'
-      const title = document.createElement('div')
-      title.className = 'text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2'
-      title.textContent = 'Props'
-      panel.appendChild(title)
-      entries.forEach(([k, c]) => panel.appendChild(createPropInput(k, c, el)))
-      section.appendChild(panel)
-    }
-    section.appendChild(el)
-    app.appendChild(section)
-  }
-}
-init()
-`)
-    created.push('src/playground/main.ts')
-  }
-  if (!existsSync(join(ROOT, 'src', 'styles', 'tailwind.css'))) {
-    mkdirSync(join(ROOT, 'src', 'styles'), { recursive: true })
-    const componentsRel = relative(join(ROOT, 'src', 'styles'), getComponentsDir()).replace(/\\/g, '/')
-    writeFileSync(join(ROOT, 'src', 'styles', 'tailwind.css'), `@import "tailwindcss";
-@source "${componentsRel}/**/*.ts";
-@source "../**/*.html";
-`)
-    created.push('src/styles/tailwind.css')
-  }
-  if (created.length > 0) console.log('  Created:', created.join(', '), '\n')
-}
 
 function testCmd() {
   const isWatch = !args.includes('--run')
@@ -576,8 +493,8 @@ function help() {
 
     page                         Build static page for GitHub Pages → docs/
 
-    export <path>                Build and copy dist/ to <path>
-      --no-build                 Skip build, copy existing dist/ only
+    export <path>                Build and copy output to <path>
+      --no-build                 Skip build, copy existing output only
       --clean                    Remove target directory before copying
 
     dev                          Start Vite dev server with playground
@@ -585,6 +502,10 @@ function help() {
       --run                      Single run (no watch)
 
     help                         Show this message
+
+  Config (package.json → "wely"):
+    componentsDir                Component files directory (default: src/wely-components)
+    outDir                       Build output directory (default: dist)
 
   Examples:
     wely init
@@ -771,26 +692,29 @@ function parseFlags(argv) {
 }
 
 function copyTo(dest) {
+  const outDir = getOutDir()
+  const outRel = getOutDirRel()
+
   if (!existsSync(dest)) {
     mkdirSync(dest, { recursive: true })
   }
 
   let count = 0
-  for (const file of readdirSync(DIST)) {
-    const src = join(DIST, file)
+  for (const file of readdirSync(outDir)) {
+    const src = join(outDir, file)
     const target = join(dest, file)
     if (statSync(src).isFile()) {
       cpSync(src, target)
       count++
       const kb = (statSync(src).size / 1024).toFixed(1)
-      console.log(`    dist/${file}  (${kb} kB)`)
+      console.log(`    ${outRel}/${file}  (${kb} kB)`)
     } else if (statSync(src).isDirectory()) {
       cpSync(src, target, { recursive: true })
       for (const sub of readdirSync(src)) {
         count++
         const subFp = join(src, sub)
         const kb = (statSync(subFp).size / 1024).toFixed(1)
-        console.log(`    dist/${file}/${sub}  (${kb} kB)`)
+        console.log(`    ${outRel}/${file}/${sub}  (${kb} kB)`)
       }
     }
   }
@@ -799,13 +723,15 @@ function copyTo(dest) {
 }
 
 function printDist() {
-  if (!existsSync(DIST)) return
+  const outDir = getOutDir()
+  const outRel = getOutDirRel()
+  if (!existsSync(outDir)) return
   console.log('\n  Output:\n')
-  for (const file of readdirSync(DIST)) {
-    const fp = join(DIST, file)
+  for (const file of readdirSync(outDir)) {
+    const fp = join(outDir, file)
     if (statSync(fp).isFile()) {
       const kb = (statSync(fp).size / 1024).toFixed(1)
-      console.log(`    dist/${file}  (${kb} kB)`)
+      console.log(`    ${outRel}/${file}  (${kb} kB)`)
     }
   }
   console.log()

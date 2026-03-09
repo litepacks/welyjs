@@ -709,6 +709,16 @@ On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/wely-
 
 This setting is used by `create`, `sync`, `list`, `docs`, `build`, and `dev` commands.
 
+**Build output directory** — Build output goes to `dist/` by default. Override via `package.json`:
+
+```json
+{
+  "wely": { "componentsDir": "src/components", "outDir": "build" }
+}
+```
+
+This setting is used by `build`, `export`, and `page` commands. Both the Wely library config (`vite.library.config.ts`) and the CLI respect this value.
+
 ### Component management
 
 ```bash
