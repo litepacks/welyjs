@@ -1,6 +1,6 @@
 {
   "name": "welyjs",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "type": "module",
   "description": "Lightweight Web Component framework powered by a single defineComponent() factory",
   "main": "./dist/wely.umd.js",
@@ -10,7 +10,8 @@
     ".": {
       "import": "./dist/wely.es.js",
       "require": "./dist/wely.umd.js"
-    }
+    },
+    "./playground/app": "./src/playground/app.ts"
   },
   "bin": {
     "wely": "./bin/wely.mjs"
@@ -18,6 +19,8 @@
   "files": [
     "dist",
     "bin",
+    "index.html",
+    "src/playground",
     "vite.library.config.ts",
     "vite.dev.config.ts"
   ],
@@ -33,7 +36,8 @@
     "build:chunks": "WELY_BUILD_MODE=chunks vite build --emptyOutDir false",
     "prepublishOnly": "npm run build",
     "test:e2e": "vitest run e2e",
-    "test:browser": "npm run build && npm run build:bundle && playwright test"
+    "test:browser": "npm run build && npm run build:bundle && playwright test",
+    "docs:playground-ss": "node scripts/capture-playground-screenshots.mjs"
   },
   "browserslist": [
     "Chrome >= 73",

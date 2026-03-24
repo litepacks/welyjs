@@ -127,6 +127,8 @@ On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/wely-
 
 **With or without vite.config:** If the project has no `vite.config`, Wely uses its built-in `vite.dev.config.ts`. If you have a custom `vite.config`, `wely dev` uses that instead.
 
+**Playground views:** The dev UI uses hash routes: **Home** (intro and shortcuts), **Docs** (copy-paste ES module and UMD examples plus a CLI cheat sheet), **Components** (the full searchable card list with live props), and **Preview** (tag picker, props panel, markup editor with **live debounced preview**, props ↔ markup sync, nested HTML — first registered custom element wins; scripts stripped). Consumer `wely dev` loads the same shell from the published `index.html` and `welyjs/playground/app`.
+
 ### Full repo (Wely development)
 
 ```bash
@@ -136,6 +138,18 @@ npm run build    # library → dist/wely.es.js + dist/wely.umd.js
 npm run test     # vitest in watch mode
 npm run test:run # single run
 ```
+
+### Build outputs (npm package vs your app bundle)
+
+Two different “build” stories exist on purpose:
+
+| Output | Command | What it contains |
+|--------|---------|------------------|
+| **Published npm package** | `npm run build` in this repo (runs before `npm publish`) | **Runtime only** — `wely.es.js` / `wely.umd.js` from `src/runtime/index.ts`. Showcase components under `src/components/` are **not** part of this artifact. |
+| **Runtime + your components** | In an app: `wely build` (or `wely build --bundle` / `--chunks` with a custom Vite config) | **Your** `src/bundle.ts` entry: re-exports `welyjs` plus imports your component folder — this is what you ship or drop into a page. |
+| **Demo / tests / docs** | `npm run build:bundle` or `build:chunks` in this repo | **Runtime + repo demo components** via `src/demo-bundle.ts` (used for browser tests, `wely page`, etc.). |
+
+So: **npm install welyjs** gives you the framework runtime; **your project’s** `wely build` produces the bundle that includes your custom elements. The repo’s extra bundle targets exist for demos and CI, not as the default published surface.
 
 ## Defining a Component
 

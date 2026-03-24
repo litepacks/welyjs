@@ -1,7 +1,8 @@
 /**
- * Demo bundle — runtime + demo components for tests and docs.
- * Used by: npm run test:browser, wely page
- * Output: wely.bundle.es.js, wely.bundle.umd.js
+ * Demo bundle entry — runtime + `src/components` (showcase components).
+ * Used when `WELY_BUILD_MODE` is `bundle` or `chunks` (see vite.config.ts).
+ * Outputs: wely.bundle.*.js / wely.chunked.es.js — for tests, `wely page`, and local demos.
+ * Not the default npm publish artifact (`npm run build` uses src/runtime only).
  */
 export * from './runtime'
 import './components'

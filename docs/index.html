@@ -43,7 +43,7 @@
         <a href="#why" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Why Wely</a>
         <a href="#bundle-size" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Bundle Size</a>
         <a href="#quickstart" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Quick Start</a>
-        <a href="#dev" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Dev Mode</a>
+        <a href="#playground" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Playground</a>
         <a href="#define" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Define</a>
         <a href="#composition" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Composition</a>
         <a href="#demo" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Demo</a>
@@ -153,22 +153,60 @@ npm run test
 npm run test:run</code></pre>
     </section>
 
-    <section id="dev" class="doc-section mb-16">
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Dev Mode &amp; Playground</h2>
-      <p class="text-zinc-600 dark:text-zinc-400 mb-4"><code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely dev</code> starts a Vite dev server with hot reload. On first run (when no <code>vite.config</code> exists), the CLI creates the playground files:</p>
+    <section id="playground" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Dev mode &amp; playground</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4"><code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely dev</code> starts a Vite dev server with hot reload. On first run (when no <code>vite.config</code> exists), the CLI creates the playground files; otherwise the Wely repo’s <code>index.html</code> + <code>src/playground/</code> entry is used.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Views (hash routes)</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3">The UI is a single page with client-side routing via <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">location.hash</code> — no extra HTML files. Default route is <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">#/home</code>.</p>
+      <div class="overflow-x-auto mb-6">
+        <table class="w-full text-sm">
+          <thead><tr><th>Route</th><th>Purpose</th></tr></thead>
+          <tbody class="text-zinc-600 dark:text-zinc-400">
+            <tr><td><code>#/home</code></td><td>Intro, shortcuts to other views</td></tr>
+            <tr><td><code>#/docs</code></td><td>Copy-paste ES module &amp; UMD snippets, CLI cheat sheet</td></tr>
+            <tr><td><code>#/gallery</code></td><td>All components in searchable cards with live props</td></tr>
+            <tr><td><code>#/preview</code> · <code>#/preview?tag=w-button</code></td><td>Preview lab: markup editor with <strong>Live preview</strong> (debounced), props panel ↔ snippet sync, nested markup (first registered tag found). Apply now forces URL sync.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-3">Screenshots</h3>
+      <p class="text-zinc-500 dark:text-zinc-500 text-sm mb-4">Captured from the Wely repo playground (<code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">npm run dev</code>). Regenerate with <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">node scripts/capture-playground-screenshots.mjs</code>.</p>
+
+      <figure class="mb-8">
+        <img src="./assets/playground/playground-home.png" width="1100" height="780" alt="Playground home: intro and buttons to browse components, preview lab, and integration docs" class="rounded-xl border border-zinc-200 dark:border-zinc-700 w-full max-w-5xl shadow-sm bg-white dark:bg-zinc-900" loading="lazy" decoding="async" />
+        <figcaption class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Home — entry screen with shortcuts</figcaption>
+      </figure>
+      <figure class="mb-8">
+        <img src="./assets/playground/playground-docs.png" width="1100" height="780" alt="Playground docs tab: ES module example, UMD script example, CLI table" class="rounded-xl border border-zinc-200 dark:border-zinc-700 w-full max-w-5xl shadow-sm bg-white dark:bg-zinc-900" loading="lazy" decoding="async" />
+        <figcaption class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Docs — integration snippets and CLI reference</figcaption>
+      </figure>
+      <figure class="mb-8">
+        <img src="./assets/playground/playground-components.png" width="1100" height="780" alt="Playground components gallery: searchable list of component cards with props" class="rounded-xl border border-zinc-200 dark:border-zinc-700 w-full max-w-5xl shadow-sm bg-white dark:bg-zinc-900" loading="lazy" decoding="async" />
+        <figcaption class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Components — full gallery with search and collapse</figcaption>
+      </figure>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3">Below: <strong>Preview</strong> with <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">w-button</code> selected. Two columns — tag filter + list; main pane has title, <strong>Props</strong> (edits push into the markup field), dashed stage, then markup textarea with <strong>Live preview</strong> so typing updates the preview after a short delay. You can wrap tags in extra HTML; the first matching registered custom element is used. <strong>Apply now</strong> applies immediately and syncs the hash. Narrow viewports may wrap the top nav.</p>
+      <figure class="mb-8">
+        <img src="./assets/playground/playground-preview.png" width="1100" height="780" alt="Wely playground Preview: left sidebar with Filter tags field and tag buttons; main area shows w-button title, PROPS section with label variant disabled, dashed preview box, and HTML snippet textarea below" class="rounded-xl border border-zinc-200 dark:border-zinc-700 w-full max-w-5xl shadow-sm bg-white dark:bg-zinc-900" loading="lazy" decoding="async" />
+        <figcaption class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Preview lab — live markup toggle, props sync, full-page capture.</figcaption>
+      </figure>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Scaffolded files (minimal project)</h3>
       <div class="overflow-x-auto mb-4">
         <table class="w-full text-sm">
           <thead><tr><th>File</th><th>Purpose</th></tr></thead>
           <tbody class="text-zinc-600 dark:text-zinc-400">
-            <tr><td><code>index.html</code></td><td>Playground page with <code>#app</code> container</td></tr>
-            <tr><td><code>src/playground/main.ts</code></td><td>Entry that imports components and renders each automatically</td></tr>
-            <tr><td><code>src/styles/tailwind.css</code></td><td>Tailwind entry with <code>@source</code> for component templates</td></tr>
+            <tr><td><code>index.html</code></td><td>Shell with <code>#app</code>; inline playground chrome styles</td></tr>
+            <tr><td><code>src/playground/main.ts</code></td><td>Imports <code>wely.config</code>, registers components, calls <code>mountApp()</code></td></tr>
+            <tr><td><code>src/playground/app.ts</code></td><td>Navigation, theme toggle, route views (exported as <code>welyjs/playground/app</code> for consumer dev)</td></tr>
+            <tr><td><code>src/styles/tailwind.css</code></td><td>Tailwind entry with <code>@source</code> for components</td></tr>
           </tbody>
         </table>
       </div>
-      <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Auto-rendering:</strong> The playground uses <code>getAllComponents()</code> to list every registered component and renders each in its own card. New components added with <code>wely create</code> appear immediately (HMR).</p>
-      <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Interactive props panel:</strong> Components with <code>props</code> get a live-editable panel. Each prop shows its name, a type badge (<code>NUMBER</code>, <code>STRING</code>, <code>BOOLEAN</code>…), and an input field. Changing the input updates the component attribute instantly — the component re-renders in real time. Boolean props use a checkbox, Number props a number input, String/Array/Object props use text inputs with appropriate placeholders.</p>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>Works everywhere:</strong> With <code>vite.config</code> (Wely repo), the existing playground is used. Without it (consumer project), the CLI scaffolds the minimal setup and uses <code>vite.dev.config.ts</code> from the package.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Auto-rendering:</strong> <code>getAllComponents()</code> lists every registered component. New components from <code>wely create</code> show up immediately (HMR).</p>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Interactive props:</strong> In the gallery (and preview lab), props get live inputs; attributes update the element and trigger re-renders.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>Consumer projects without <code>vite.config</code>:</strong> <code>vite.dev.config.ts</code> serves the same HTML shell from the published <code>index.html</code> and a virtual entry that imports <code>welyjs/playground/app</code> after your config and components — same UX as the repo.</p>
     </section>
 
     <section id="define" class="doc-section mb-16">
@@ -457,8 +495,8 @@ wely.list()                  // all registered tag names</code></pre>
   runtime/          defineComponent, config, registry, fetch, resource, store
   components/       w-counter, w-button, w-counter-card, w-pokemon-grid, w-user-list
   styles/           tailwind.css
-  playground/       main.ts
-index.html          Playground
+  playground/       main.ts, app.ts, home, docs, gallery, preview-lab
+index.html          Playground shell
 wely.config.ts      App config
 vite.config.ts      Vite + Vitest
 page/               GitHub Pages landing (this page)</code></pre>

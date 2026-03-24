@@ -4,6 +4,7 @@ import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import dts from 'vite-plugin-dts'
 
+/** Library build modes: default = runtime-only for npm; bundle/chunks = runtime + demo components (see src/demo-bundle.ts). */
 const isBundle = process.env.WELY_BUILD_MODE === 'bundle'
 const isChunks = process.env.WELY_BUILD_MODE === 'chunks'
 const runDts = !isBundle && !isChunks
