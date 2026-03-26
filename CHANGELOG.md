@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.12] - 2025-03-24
+
+### Added
+
+- `vitest.consumer.config.ts` and `wely test`: when the project has no `vitest.config.*` or `vite.config.*`, Vitest uses this bundled config (avoids resolving a parent directory’s Vite config).
+- Export `welyjs/vitest-consumer` for optional reuse or extension.
+- `wely init`: `test` script plus `vitest` and `jsdom` devDependencies (semver aligned with this package).
+
+### Changed
+
+- README and `docs/index.html`: testing workflow and `wely test` behavior.
+
 ## [0.0.11] - 2025-03-24
 
 ### Added

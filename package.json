@@ -1,6 +1,6 @@
 {
   "name": "welyjs",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "type": "module",
   "description": "Lightweight Web Component framework powered by a single defineComponent() factory",
   "main": "./dist/wely.umd.js",
@@ -16,7 +16,8 @@
       "types": "./src/playground/app.ts",
       "import": "./src/playground/app.ts",
       "default": "./src/playground/app.ts"
-    }
+    },
+    "./vitest-consumer": "./vitest.consumer.config.ts"
   },
   "bin": {
     "wely": "./bin/wely.mjs"
@@ -27,7 +28,8 @@
     "index.html",
     "src/playground",
     "vite.library.config.ts",
-    "vite.dev.config.ts"
+    "vite.dev.config.ts",
+    "vitest.consumer.config.ts"
   ],
   "scripts": {
     "dev": "vite",

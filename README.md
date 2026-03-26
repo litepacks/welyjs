@@ -26,7 +26,7 @@ Building frontend components today typically means choosing a heavy framework, w
 | **Style** | Use Tailwind classes directly in templates | Tailwind CSS is compiled and injected into Shadow DOM automatically |
 | **Fetch data** | `createClient({ baseURL })` | Built-in HTTP client with interceptors, timeout, and typed responses |
 | **Manage state** | `ctx.resource()` / `ctx.use(store)` | Async resources + shared stores with auto re-render, abort, and batching |
-| **Test** | `wely test` | Vitest runs against real DOM with zero extra config (same `vite.config.ts`) |
+| **Test** | `wely test` | Vitest + jsdom; if there is no local `vitest.config.*` or `vite.config.*`, the CLI uses a bundled default so tests do not pick up a parent folder’s Vite project |
 | **Build** | `wely build` | Produces ES + UMD bundles — standard Web Components usable anywhere |
 | **Export** | `wely export ../other-project/lib` | Copies the built output directly into any project folder |
 | **Document** | `wely docs` | Parses component source files and generates a complete `COMPONENTS.md` reference |
@@ -802,6 +802,8 @@ npm run test:browser # Playwright — real browser render tests
 ```
 
 **`wely dev`** — Starts the playground at `localhost:5173` (or next available port). Creates `index.html`, `src/playground/main.ts`, and `src/styles/tailwind.css` on first run. All components are auto-rendered; new components added with `wely create` appear via HMR.
+
+**`wely test`** — Runs Vitest (`npx vitest` in watch mode, or `npx vitest run` with `--run`). Add **`vitest`** and **`jsdom`** as devDependencies (`wely init` adds them and a `test` script). If your project has no `vitest.config.*` and no `vite.config.*`, the CLI passes `welyjs`’s bundled `vitest.consumer.config.ts` so Vitest does not walk up the filesystem and load another repo’s Vite config (a common issue in nested or monorepo-style folders). The default includes `src/**/*.test.ts` and `src/**/*.spec.ts`, `environment: 'jsdom'`, `passWithNoTests: true`. Add your own `vitest.config.ts` or `vite.config.ts` when you need custom resolution, aliases, or coverage.
 
 Run via npm script:
 

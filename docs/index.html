@@ -43,6 +43,8 @@
         <a href="#why" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Why Wely</a>
         <a href="#bundle-size" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Bundle Size</a>
         <a href="#quickstart" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Quick Start</a>
+        <a href="#workflow" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Workflow</a>
+        <a href="#testing" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Testing</a>
         <a href="#playground" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Playground</a>
         <a href="#define" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Define</a>
         <a href="#composition" class="text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Composition</a>
@@ -101,13 +103,13 @@
         <table class="w-full text-sm">
           <thead><tr><th>Step</th><th>What you do</th><th>What Wely handles</th></tr></thead>
           <tbody class="text-zinc-600 dark:text-zinc-400">
-            <tr><td>Configure</td><td><code>wely init</code> → <code>wely.config.ts</code> (or add manually)</td><td>Centralized config via <code>ctx.config</code></td></tr>
+            <tr><td>Configure</td><td><code>wely init</code> → <code>wely.config.ts</code>, <code>package.json</code> (<code>wely dev</code> / <code>wely build</code>, <code>^welyjs</code>), <code>src/bundle.ts</code>, components index</td><td>Centralized config via <code>ctx.config</code></td></tr>
             <tr><td>Create</td><td><code>wely create w-card --props title:String</code></td><td>Scaffolds component file and barrel index</td></tr>
             <tr><td>Develop</td><td><code>wely dev</code></td><td>Hot-reloading playground</td></tr>
             <tr><td>Style</td><td>Use Tailwind classes in templates</td><td>Compiled and injected into Shadow DOM</td></tr>
             <tr><td>Fetch</td><td><code>createClient({ baseURL })</code></td><td>HTTP client with interceptors, timeout</td></tr>
             <tr><td>State</td><td><code>ctx.resource()</code> / <code>ctx.use(store)</code></td><td>Async resources + shared stores</td></tr>
-            <tr><td>Test</td><td><code>wely test</code></td><td>Vitest with zero extra config</td></tr>
+            <tr><td>Test</td><td><code>wely test</code></td><td>Vitest + jsdom (add devDeps); bundled default config when no local <code>vitest.config</code> / <code>vite.config</code> — avoids resolving a parent folder’s Vite project</td></tr>
             <tr><td>Build</td><td><code>wely build</code></td><td>ES + UMD bundles</td></tr>
             <tr><td>Export</td><td><code>wely export ../other-project/lib</code></td><td>Copies output to any folder</td></tr>
             <tr><td>Document</td><td><code>wely docs</code></td><td>Generates <code>COMPONENTS.md</code></td></tr>
@@ -140,11 +142,11 @@
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Quick Start</h2>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Minimal (new project):</strong> Only <code>wely.config.ts</code> + <code>welyjs</code> — no vite.config, no extra deps.</p>
       <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto mb-4"><code class="language-bash">mkdir my-app &amp;&amp; cd my-app
-wely init
+wely init                    # package.json + wely.config + bundle entry + components/
 npm install
 wely create w-hello --props msg:String
 wely build                   # → dist/wely.bundle.*.js
-wely dev                      # playground at localhost:5173</code></pre>
+wely dev                     # playground (or: npm run dev — same scripts after init)</code></pre>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Full repo (Wely development):</strong></p>
       <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-bash">npm install
 npm run dev      # playground at localhost:5173
@@ -153,9 +155,65 @@ npm run test
 npm run test:run</code></pre>
     </section>
 
+    <section id="workflow" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Developer workflow</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-6">
+        Typical loop for an app that lives in its own folder: scaffold → add or edit components → use the playground for quick feedback → build artifacts for production or static hosting.
+      </p>
+
+      <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 p-6 md:p-8 mb-8 overflow-x-auto">
+        <div class="min-w-[min(100%,520px)] mx-auto">
+          <div class="flex flex-col items-center gap-0">
+            <div class="w-full max-w-md rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50/80 dark:bg-amber-950/30 px-4 py-3 text-center">
+              <p class="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200 mb-1">1 · Bootstrap</p>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300"><code class="bg-white/80 dark:bg-zinc-800 px-1 rounded">wely init</code> → <code class="bg-white/80 dark:bg-zinc-800 px-1 rounded">npm install</code></p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Creates <code>wely.config.ts</code>, <code>package.json</code> (<code>wely dev</code> / <code>wely build</code>, <code>welyjs</code> range from the CLI), <code>src/bundle.ts</code>, <code>src/wely-components/index.ts</code></p>
+            </div>
+            <div class="text-amber-600 dark:text-amber-400 text-xl leading-none py-1 select-none" aria-hidden="true">↓</div>
+            <div class="w-full max-w-md rounded-lg border border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3 text-center">
+              <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 mb-1">2 · Components</p>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300"><code class="bg-zinc-200/80 dark:bg-zinc-700 px-1 rounded">wely create &lt;tag&gt;</code> or edit <code class="bg-zinc-200/80 dark:bg-zinc-700 px-1 rounded">*.ts</code> under your components folder</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Import each file from <code>index.ts</code> so <code>defineComponent()</code> runs and registers tags</p>
+            </div>
+            <div class="text-amber-600 dark:text-amber-400 text-xl leading-none py-1 select-none" aria-hidden="true">↓</div>
+            <div class="w-full max-w-md rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/80 dark:bg-emerald-950/25 px-4 py-3 text-center">
+              <p class="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200 mb-1">3 · Try in the playground</p>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300"><code class="bg-white/80 dark:bg-zinc-800 px-1 rounded">wely dev</code> (no local <code>vite.config</code>)</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1"><strong>Gallery</strong> lists all registered components · <strong>Preview lab</strong>: HTML editor (highlighted), live preview, optional session restore · Hash routes <code>#/gallery</code>, <code>#/preview?tag=…</code></p>
+            </div>
+            <div class="text-amber-600 dark:text-amber-400 text-xl leading-none py-1 select-none" aria-hidden="true">↓</div>
+            <div class="w-full max-w-md rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50/80 dark:bg-violet-950/25 px-4 py-3 text-center">
+              <p class="text-xs font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-200 mb-1">4 · Build &amp; ship</p>
+              <p class="text-sm text-zinc-700 dark:text-zinc-300"><code class="bg-white/80 dark:bg-zinc-800 px-1 rounded">wely build</code> → <code>dist/</code> bundle (and library modes when a <code>vite.config</code> exists)</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1"><code>wely export &lt;path&gt;</code> copies artifacts · <code>wely page</code> prepares <code>docs/</code> for GitHub Pages</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-zinc-500 dark:text-zinc-500 text-sm mb-4">Loop back from step 3 anytime: change components, save, HMR updates the playground. Step 4 is when you need a distributable bundle or a deployable folder.</p>
+
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-3">At a glance (flow)</h3>
+      <pre class="bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 overflow-x-auto font-mono leading-relaxed" role="img" aria-label="Workflow diagram">  ┌──────────────┐     ┌──────────────┐     ┌─────────────────────────┐
+  │  wely init   │ ──► │ npm install  │ ──► │ Edit / wely create tags │
+  └──────────────┘     └──────────────┘     └───────────┬─────────────┘
+                                                        │
+                                                        ▼
+  ┌──────────────┐     ┌──────────────┐     ┌─────────────────────────┐
+  │ wely export  │ ◄── │  wely build  │ ◄── │ wely dev → playground   │
+  │  wely page   │     │   → dist/    │     │ Gallery · Preview lab   │
+  └──────────────┘     └──────────────┘     └─────────────────────────┘</pre>
+    </section>
+
+    <section id="testing" class="doc-section mb-16">
+      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Unit tests (<code class="text-lg">wely test</code>)</h2>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-3">Install <strong>vitest</strong> and <strong>jsdom</strong> as devDependencies (<code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely init</code> adds them and a <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">test</code> script). <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely test</code> runs Vitest in watch mode; <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely test --run</code> runs once (CI).</p>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-3">If the project has <strong>no</strong> <code>vitest.config.*</code> and <strong>no</strong> <code>vite.config.*</code>, the CLI passes the published <code>welyjs/vitest-consumer</code> config so Vitest does not accidentally load a <code>vite.config</code> from a parent directory. Default globs: <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">src/**/*.test.ts</code>, <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">src/**/*.spec.ts</code>; environment <code>jsdom</code>; <code>passWithNoTests: true</code>. Add your own config when you need aliases, coverage, or different roots.</p>
+    </section>
+
     <section id="playground" class="doc-section mb-16">
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Dev mode &amp; playground</h2>
-      <p class="text-zinc-600 dark:text-zinc-400 mb-4"><code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely dev</code> starts a Vite dev server with hot reload. On first run (when no <code>vite.config</code> exists), the CLI creates the playground files; otherwise the Wely repo’s <code>index.html</code> + <code>src/playground/</code> entry is used.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 mb-4"><code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">wely dev</code> starts a Vite dev server with hot reload. On first run (when no <code>vite.config</code> exists), the CLI uses the bundled <code>vite.dev.config.ts</code>: the published <code>index.html</code> shell and a virtual entry that imports your <code>wely.config</code>, dev CSS, <strong>your components <code>index.ts</code></strong> (resolved as a real module so the registry fills), then <code>mountApp()</code>. If you already have a <code>vite.config</code>, plain <code>vite</code> runs instead — use the same <code>wely dev</code> / <code>npm run dev</code> scripts from <code>wely init</code> to get the playground path.</p>
 
       <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Views (hash routes)</h3>
       <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3">The UI is a single page with client-side routing via <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">location.hash</code> — no extra HTML files. Default route is <code class="bg-zinc-200 dark:bg-zinc-700 px-1 rounded">#/home</code>.</p>
@@ -166,7 +224,7 @@ npm run test:run</code></pre>
             <tr><td><code>#/home</code></td><td>Intro, shortcuts to other views</td></tr>
             <tr><td><code>#/docs</code></td><td>Copy-paste ES module &amp; UMD snippets, CLI cheat sheet</td></tr>
             <tr><td><code>#/gallery</code></td><td>All components in searchable cards with live props</td></tr>
-            <tr><td><code>#/preview</code> · <code>#/preview?tag=w-button</code></td><td>Preview lab: markup editor with <strong>Live preview</strong> (debounced), props panel ↔ snippet sync, nested markup (first registered tag found). Apply now forces URL sync.</td></tr>
+            <tr><td><code>#/preview</code> · <code>#/preview?tag=w-button</code></td><td>Preview lab: <strong>HTML editor</strong> with syntax highlighting (CodeMirror), <strong>Live preview</strong> (debounced) without overwriting your markup, one sandbox for multiple tags, props for the first registered element in document order, <strong>sessionStorage</strong> for snippet / filter. <strong>Apply now</strong> syncs the URL.</td></tr>
           </tbody>
         </table>
       </div>
@@ -192,21 +250,23 @@ npm run test:run</code></pre>
         <figcaption class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Preview lab — live markup toggle, props sync, full-page capture.</figcaption>
       </figure>
 
-      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Scaffolded files (minimal project)</h3>
+      <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">Where the playground lives</h3>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Wely repo (full checkout):</strong> <code>index.html</code> + <code>src/playground/*</code> + <code>src/styles/tailwind.css</code> — <code>npm run dev</code> uses the same entry as below.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3"><strong>Consumer app (only <code>wely init</code> files, no <code>vite.config</code>):</strong> the CLI ships the shell HTML and a <strong>virtual</strong> entry that imports your <code>wely.config.ts</code>, generated dev CSS, <code>welyjs/playground/app</code>, and <code>&lt;componentsDir&gt;/index.ts</code> — you do not copy <code>src/playground/</code> into your repo.</p>
       <div class="overflow-x-auto mb-4">
         <table class="w-full text-sm">
-          <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+          <thead><tr><th>Artifact</th><th>Purpose</th></tr></thead>
           <tbody class="text-zinc-600 dark:text-zinc-400">
-            <tr><td><code>index.html</code></td><td>Shell with <code>#app</code>; inline playground chrome styles</td></tr>
-            <tr><td><code>src/playground/main.ts</code></td><td>Imports <code>wely.config</code>, registers components, calls <code>mountApp()</code></td></tr>
-            <tr><td><code>src/playground/app.ts</code></td><td>Navigation, theme toggle, route views (exported as <code>welyjs/playground/app</code> for consumer dev)</td></tr>
-            <tr><td><code>src/styles/tailwind.css</code></td><td>Tailwind entry with <code>@source</code> for components</td></tr>
+            <tr><td><code>index.html</code> (from <code>welyjs</code> package)</td><td>Shell with <code>#app</code>; inline playground chrome styles</td></tr>
+            <tr><td><code>virtual:wely-playground</code></td><td>Entry: config → dev CSS → <code>mountApp()</code> after dynamic import of components</td></tr>
+            <tr><td><code>src/playground/app.ts</code></td><td>Navigation, routes, views — resolved via <code>welyjs/playground/app</code> alias</td></tr>
+            <tr><td><code>src/wely-components/index.ts</code> (your project)</td><td>Side-effect imports that register each component</td></tr>
           </tbody>
         </table>
       </div>
       <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Auto-rendering:</strong> <code>getAllComponents()</code> lists every registered component. New components from <code>wely create</code> show up immediately (HMR).</p>
       <p class="text-zinc-600 dark:text-zinc-400 mb-2"><strong>Interactive props:</strong> In the gallery (and preview lab), props get live inputs; attributes update the element and trigger re-renders.</p>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>Consumer projects without <code>vite.config</code>:</strong> <code>vite.dev.config.ts</code> serves the same HTML shell from the published <code>index.html</code> and a virtual entry that imports <code>welyjs/playground/app</code> after your config and components — same UX as the repo.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm"><strong>Consumer projects without <code>vite.config</code>:</strong> <code>vite.dev.config.ts</code> serves the same HTML shell from the published <code>index.html</code> and a virtual entry that imports <code>welyjs/playground/app</code> after your config and components — same UX as the repo. The components entry is resolved to <code>&lt;componentsDir&gt;/index.ts</code> so Vite always loads your registration side effects.</p>
     </section>
 
     <section id="define" class="doc-section mb-16">
@@ -332,9 +392,9 @@ defineComponent({ tag: 'w-card', devInfo: { version: '2.0.0' }, render: () => ht
 
     <section id="cli" class="doc-section mb-16">
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">CLI</h2>
-      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3">Runs in the current directory. New projects: <code>wely init</code> → <code>npm install</code> → <code>wely create</code> → <code>wely build</code>. Wely brings Vite and Tailwind — no extra deps.</p>
+      <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-3">Runs in the current directory. Use <code>wely --help</code>, <code>wely -v</code>, and <code>wely help &lt;command&gt;</code> for subcommands. New projects: <code>wely init</code> → <code>npm install</code> → <code>wely create</code> → <code>wely build</code>. <code>wely init</code> writes <code>package.json</code> with <code>wely dev</code> / <code>wely build</code> and a <code>welyjs</code> semver range matching the installed CLI.</p>
       <pre class="bg-zinc-900 dark:bg-zinc-900 p-5 rounded-xl text-sm overflow-x-auto"><code class="language-bash"># Setup
-wely init                    # wely.config.ts + package.json
+wely init                    # wely.config.ts + package.json + bundle + components index
 npm install
 
 # Components
@@ -359,8 +419,8 @@ wely export ../lib --clean
 
 # Dev &amp; test
 wely dev
-wely test
-wely test --run
+wely test                 # watch — needs vitest + jsdom (wely init adds them)
+wely test --run           # single run (CI)
 
 # GitHub Pages
 wely page                    # → docs/</code></pre>

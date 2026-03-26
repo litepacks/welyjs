@@ -6,7 +6,7 @@
  * The virtual entry imports `welyjs/playground/app` so behavior matches `src/playground/main.ts`.
  */
 import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
@@ -14,8 +14,17 @@ import tailwindcss from '@tailwindcss/vite'
 const pkgDir = dirname(fileURLToPath(import.meta.url))
 
 const root = process.cwd()
-const componentsDir = (process.env.WELY_COMPONENTS_DIR || '').replace(/\\/g, '/')
-const configPath = (process.env.WELY_CONFIG_PATH || '').replace(/\\/g, '/')
+/** Absolute path to the folder that contains components `index.ts` (from env or default). */
+const componentsDirAbs = process.env.WELY_COMPONENTS_DIR
+  ? resolve(process.env.WELY_COMPONENTS_DIR)
+  : resolve(root, 'src/wely-components')
+const componentsRelToRoot = relative(root, componentsDirAbs).replace(/\\/g, '/')
+const configPathResolved = process.env.WELY_CONFIG_PATH
+  ? resolve(process.env.WELY_CONFIG_PATH)
+  : join(root, 'wely.config.ts')
+
+/** Vite cannot reliably resolve `import(absPath)` for consumer dirs; map to the real index module. */
+const WELY_COMPONENTS_VIRTUAL = 'virtual:wely-components'
 
 function buildPlaygroundHtml(virtualEntry: string): string {
   const raw = readFileSync(join(pkgDir, 'index.html'), 'utf-8')
@@ -31,16 +40,16 @@ function welyPlaygroundPlugin() {
   const RESOLVED_CSS = '\0' + VIRTUAL_CSS
 
   const playgroundJs = `
-import '${configPath}'
+import ${JSON.stringify(configPathResolved)}
 import '${VIRTUAL_CSS}'
 import { mountApp } from 'welyjs/playground/app'
-await import('${componentsDir}')
+await import(${JSON.stringify(WELY_COMPONENTS_VIRTUAL)})
 mountApp()
 `
 
   const playgroundHtml = buildPlaygroundHtml(VIRTUAL_ENTRY)
 
-  const tailwindCss = `@import "tailwindcss";\n@source "${componentsDir}/**/*.ts";\n`
+  const tailwindCss = `@import "tailwindcss";\n@source "${componentsRelToRoot}/**/*.ts";\n`
 
   return {
     name: 'wely-playground',
@@ -48,6 +57,7 @@ mountApp()
     resolveId(id) {
       if (id === VIRTUAL_ENTRY || id === '/' + VIRTUAL_ENTRY) return RESOLVED_ENTRY
       if (id === VIRTUAL_CSS) return RESOLVED_CSS
+      if (id === WELY_COMPONENTS_VIRTUAL) return join(componentsDirAbs, 'index.ts')
     },
 
     load(id) {

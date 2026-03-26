@@ -12,6 +12,31 @@ const WELY_PKG = resolve(__dirname, '..')
 const DEFAULT_COMPONENTS_DIR = 'src/wely-components'
 const DEFAULT_OUT_DIR = 'dist'
 
+/** Semver range for package.json (same CLI install = same welyjs major/minor line). */
+function getWelyjsDependencyRange() {
+  try {
+    const p = JSON.parse(readFileSync(join(WELY_PKG, 'package.json'), 'utf-8'))
+    const v = p.version ?? '0.0.1'
+    return `^${v}`
+  } catch {
+    return '^0.0.1'
+  }
+}
+
+/** Semver ranges for Vitest + jsdom (same as the welyjs package devDependencies). */
+function getVitestDevDependencyRanges() {
+  try {
+    const p = JSON.parse(readFileSync(join(WELY_PKG, 'package.json'), 'utf-8'))
+    const d = p.devDependencies ?? {}
+    return {
+      vitest: d.vitest ?? '^4.0.0',
+      jsdom: d.jsdom ?? '^28.0.0',
+    }
+  } catch {
+    return { vitest: '^4.0.0', jsdom: '^28.0.0' }
+  }
+}
+
 function getWelyConfig() {
   try {
     return JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8')).wely ?? {}
@@ -87,7 +112,8 @@ function build(opts = {}) {
   }
 }
 
-function ensureConsumerFiles() {
+function ensureConsumerFiles(opts = {}) {
+  const silent = opts.silent === true
   const created = []
   const componentsDir = getComponentsDir()
   const componentsImport = getComponentsImportPath()
@@ -123,13 +149,15 @@ import '${componentsImport}'
     created.push(relative(ROOT, componentsDir).replace(/\\/g, '/') + '/index.ts')
   }
 
-  if (created.length > 0) {
+  if (created.length > 0 && !silent) {
     console.log('  Created:', created.join(', '), '\n')
   }
+  return created
 }
 
 function init() {
   const created = []
+  const welyRange = getWelyjsDependencyRange()
 
   const welyConfigPath = join(ROOT, 'wely.config.ts')
   if (!existsSync(welyConfigPath)) {
@@ -144,13 +172,16 @@ export default defineConfig({
   }
 
   const pkgPath = join(ROOT, 'package.json')
+  const vitestRanges = getVitestDevDependencyRanges()
+
   if (!existsSync(pkgPath)) {
     const pkg = {
       name: 'my-wely-app',
       version: '0.0.1',
       type: 'module',
-      scripts: { dev: 'vite', build: 'vite build' },
-      dependencies: { welyjs: '^0.0.2' },
+      scripts: { dev: 'wely dev', build: 'wely build', test: 'wely test' },
+      dependencies: { welyjs: welyRange },
+      devDependencies: { vitest: vitestRanges.vitest, jsdom: vitestRanges.jsdom },
       wely: { componentsDir: DEFAULT_COMPONENTS_DIR },
     }
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
@@ -158,26 +189,29 @@ export default defineConfig({
   } else {
     try {
       const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
-      let changed = false
-      if (!pkg.dependencies?.welyjs) {
-        pkg.dependencies = pkg.dependencies ?? {}
-        pkg.dependencies.welyjs = pkg.dependencies.welyjs ?? '^0.0.2'
-        changed = true
-      }
-      if (!pkg.wely?.componentsDir) {
-        pkg.wely = pkg.wely ?? {}
-        pkg.wely.componentsDir = DEFAULT_COMPONENTS_DIR
-        changed = true
-      }
-      if (changed) {
-        writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
-        created.push('package.json')
-      }
-    } catch (_) {}
+      pkg.dependencies = pkg.dependencies ?? {}
+      pkg.dependencies.welyjs = welyRange
+      pkg.scripts = pkg.scripts ?? {}
+      pkg.scripts.dev = 'wely dev'
+      pkg.scripts.build = 'wely build'
+      pkg.scripts.test = pkg.scripts.test ?? 'wely test'
+      pkg.devDependencies = pkg.devDependencies ?? {}
+      if (!pkg.devDependencies.vitest) pkg.devDependencies.vitest = vitestRanges.vitest
+      if (!pkg.devDependencies.jsdom) pkg.devDependencies.jsdom = vitestRanges.jsdom
+      pkg.wely = pkg.wely ?? {}
+      if (!pkg.wely.componentsDir) pkg.wely.componentsDir = DEFAULT_COMPONENTS_DIR
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
+      created.push('package.json')
+    } catch (e) {
+      console.error(`  Could not read or write package.json: ${e?.message ?? e}\n`)
+      process.exit(1)
+    }
   }
 
+  created.push(...ensureConsumerFiles({ silent: true }))
+
   if (created.length > 0) {
-    console.log('\n  Created:\n')
+    console.log('\n  Created / updated:\n')
     for (const f of created) console.log(`    ${f}`)
     console.log('\n  Run: npm install\n')
   } else {
@@ -426,13 +460,25 @@ function dev() {
 
 
 
+function hasProjectVitestOrViteConfig() {
+  const names = [
+    'vitest.config.ts',
+    'vitest.config.mts',
+    'vitest.config.js',
+    'vitest.config.mjs',
+    'vite.config.ts',
+    'vite.config.js',
+    'vite.config.mts',
+  ]
+  return names.some((f) => existsSync(join(ROOT, f)))
+}
+
 function testCmd(opts) {
   const isWatch = !opts.run
-  if (isWatch) {
-    run('npx vitest', { stdio: 'inherit' })
-  } else {
-    run('npx vitest run', { stdio: 'inherit' })
-  }
+  const useConsumerDefaults = !hasProjectVitestOrViteConfig()
+  const configArg = useConsumerDefaults ? ` --config ${join(WELY_PKG, 'vitest.consumer.config.ts')}` : ''
+  const cmd = isWatch ? `npx vitest${configArg}` : `npx vitest run${configArg}`
+  run(cmd, { stdio: 'inherit' })
 }
 
 // ---------------------------------------------------------------------------
@@ -668,7 +714,12 @@ Examples:
 
 program.addHelpCommand('help [command]', 'display help for command')
 
-program.command('init').description('Create wely.config.ts and ensure wely is in package.json').action(init)
+program
+  .command('init')
+  .description(
+    'Scaffold wely.config.ts, package.json (wely dev / wely build / wely test, vitest+jsdom devDeps, ^welyjs from this CLI), src/bundle.ts, and components index',
+  )
+  .action(init)
 
 program
   .command('create <tag>')
