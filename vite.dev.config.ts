@@ -75,6 +75,12 @@ mountApp()
 
 export default defineConfig({
   root,
+  resolve: {
+    alias: {
+      /** Vite 7 import-analysis expects an explicit export; point at package source inside welyjs. */
+      'welyjs/playground/app': join(pkgDir, 'src/playground/app.ts'),
+    },
+  },
   plugins: [
     welyPlaygroundPlugin(),
     tailwindcss(),

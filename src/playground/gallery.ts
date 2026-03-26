@@ -1,4 +1,4 @@
-import { getAllComponents } from '../runtime'
+import { getAllComponents } from 'welyjs'
 import { chevronHtml, createSection } from './props'
 import { SVG } from './svg'
 

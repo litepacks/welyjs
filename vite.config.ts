@@ -10,6 +10,12 @@ const isChunks = process.env.WELY_BUILD_MODE === 'chunks'
 const runDts = !isBundle && !isChunks
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      /** Same public API as the published package — playground imports `welyjs` so it works in consumer projects too. */
+      welyjs: resolve(__dirname, 'src/runtime/index.ts'),
+    },
+  },
   plugins: [
     tailwindcss(),
     runDts && dts({ rollupTypes: true, outDir: 'dist', exclude: ['**/__tests__/**', '**/*.test.ts'] }),

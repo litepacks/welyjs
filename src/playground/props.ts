@@ -1,4 +1,4 @@
-import type { ComponentDef } from '../runtime/types'
+import type { ComponentDef } from 'welyjs'
 import { SVG } from './svg'
 
 export function typeName(ctor: unknown): string {
@@ -107,24 +107,29 @@ export function createSection(tag: string, def: ComponentDef): HTMLElement {
   return section
 }
 
+/** Props panel for an existing custom element instance (Preview Lab). */
+export function createPropsPanelForElement(el: HTMLElement, def: ComponentDef): HTMLElement | null {
+  const props = def.props ?? {}
+  const entries = Object.entries(props)
+  if (entries.length === 0) return null
+  const panel = document.createElement('div')
+  panel.className = 'wp-props-panel'
+  const title = document.createElement('div')
+  title.className = 'wp-props-title'
+  title.textContent = 'Props'
+  panel.appendChild(title)
+  entries.forEach(([k, c]) => panel.appendChild(createPropInput(k, c, el)))
+  return panel
+}
+
 /** Expanded preview for a single component (no collapsible header). */
 export function createPreviewMount(tag: string, def: ComponentDef): { root: HTMLElement; element: HTMLElement } {
   const root = document.createElement('div')
   root.className = 'wp-preview-panel'
 
   const el = document.createElement(tag)
-  const props = def.props ?? {}
-  const entries = Object.entries(props)
-  if (entries.length > 0) {
-    const panel = document.createElement('div')
-    panel.className = 'wp-props-panel'
-    const title = document.createElement('div')
-    title.className = 'wp-props-title'
-    title.textContent = 'Props'
-    panel.appendChild(title)
-    entries.forEach(([k, c]) => panel.appendChild(createPropInput(k, c, el)))
-    root.appendChild(panel)
-  }
+  const panel = createPropsPanelForElement(el, def)
+  if (panel) root.appendChild(panel)
 
   const stage = document.createElement('div')
   stage.className = 'wp-preview-stage'
@@ -132,4 +137,22 @@ export function createPreviewMount(tag: string, def: ComponentDef): { root: HTML
   root.appendChild(stage)
 
   return { root, element: el }
+}
+
+/**
+ * Preview Lab: one panel (props for first matching element) + a stage that may contain full markup.
+ */
+export function createUnifiedPreviewRoot(
+  stage: HTMLElement,
+  firstElement: HTMLElement,
+  def: ComponentDef,
+): { root: HTMLElement; element: HTMLElement } {
+  const root = document.createElement('div')
+  root.className = 'wp-preview-panel'
+
+  const panel = createPropsPanelForElement(firstElement, def)
+  if (panel) root.appendChild(panel)
+
+  root.appendChild(stage)
+  return { root, element: firstElement }
 }

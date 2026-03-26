@@ -15,6 +15,12 @@ export function renderHome(container: HTMLElement, onNavigate: (r: Route) => voi
   b1.type = 'button'
   b1.className = 'wp-btn wp-btn-primary'
   b1.textContent = 'Browse components'
+  // Tailwind preflight sets `button { background-color: transparent; color: inherit }` and is often
+  // injected after <style> in index.html, so class-based overrides can fail. Inline author styles win.
+  b1.style.setProperty('background-color', 'var(--wp-accent2)')
+  b1.style.setProperty('color', '#0a0a0a')
+  b1.style.setProperty('border-color', 'var(--wp-accent2)')
+  b1.style.setProperty('font-weight', '600')
   b1.addEventListener('click', () => onNavigate('gallery'))
 
   const b2 = document.createElement('button')

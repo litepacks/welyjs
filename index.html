@@ -53,6 +53,7 @@
     }
     .wp-brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; }
     .wp-brand h1 span { font-weight: 300; color: var(--wp-subtle); }
+    [data-theme="dark"] .wp-brand h1 span { color: var(--wp-muted); }
     .wp-nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; flex: 1; justify-content: center; }
     .wp-nav-link {
       font-size: 13px; padding: 6px 12px; border-radius: 8px; color: var(--wp-muted); text-decoration: none;
@@ -67,9 +68,6 @@
     .wp-muted { font-size: 13px; color: var(--wp-muted); line-height: 1.5; margin-top: 1rem; }
     .wp-muted code { font-size: 12px; background: var(--wp-surface2); padding: 1px 5px; border-radius: 4px; }
     .wp-cta-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0; }
-    .wp-btn-primary { background: var(--wp-accent2); color: #18181b; border-color: var(--wp-accent2); font-weight: 600; }
-    .wp-btn-primary:hover { filter: brightness(1.05); color: #18181b; }
-    [data-theme="dark"] .wp-btn-primary { color: #18181b; }
     .wp-doc-h2 { font-size: 1.05rem; margin: 1.5rem 0 0.75rem; font-weight: 600; }
     .wp-doc-h3 { font-size: 0.95rem; margin: 1rem 0 0.5rem; font-weight: 600; color: var(--wp-muted); }
     .wp-code-block { position: relative; margin: 0.5rem 0 1rem; }
@@ -110,6 +108,11 @@
       min-height: 160px; padding: 16px; border-radius: 8px; border: 1px dashed var(--wp-border);
       background: var(--wp-surface3); display: flex; align-items: center; justify-content: center;
     }
+    .wp-preview-stage--sandbox {
+      display: block;
+      align-items: unset;
+      justify-content: unset;
+    }
     .wp-snippet-section { margin-top: 0.5rem; }
     .wp-snippet-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--wp-subtle); margin-bottom: 6px; }
     .wp-snippet-hint { font-size: 12px; color: var(--wp-muted); line-height: 1.45; margin-bottom: 10px; }
@@ -117,6 +120,14 @@
     .wp-snippet-live-label { font-size: 12px; color: var(--wp-fg); cursor: pointer; user-select: none; }
     .wp-snippet-live-row input { width: 16px; height: 16px; accent-color: var(--wp-accent2); cursor: pointer; }
     .wp-snippet-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .wp-snippet-editor-host { width: 100%; margin-bottom: 8px; }
+    .wp-snippet-editor-wrap {
+      border-radius: 8px; border: 1px solid var(--wp-border); overflow: hidden; min-height: 120px;
+      background: var(--wp-surface);
+    }
+    .wp-snippet-editor-wrap .cm-editor { min-height: 120px; }
+    .wp-snippet-editor-wrap .cm-editor.cm-focused { outline: none; }
+    .wp-snippet-editor-wrap.wp-snippet-error { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,.25); }
     .wp-snippet-ta {
       width: 100%; min-height: 72px; padding: 10px; border-radius: 8px; border: 1px solid var(--wp-border);
       font-family: ui-monospace, monospace; font-size: 12px; background: var(--wp-surface); color: var(--wp-fg);
@@ -185,6 +196,17 @@
       user-select: none; line-height: 1;
     }
     .wp-btn:hover { background: var(--wp-surface2); color: var(--wp-fg); }
+    /* Primary CTA colors are set inline in home.ts (survives Tailwind preflight order). Hover only here. */
+    button.wp-btn.wp-btn-primary:hover { filter: brightness(1.07); }
+    [data-theme="dark"] .wp-cta-row .wp-btn:not(.wp-btn-primary) {
+      color: #e4e4e7 !important;
+      border-color: var(--wp-border);
+      background-color: var(--wp-surface);
+    }
+    [data-theme="dark"] .wp-cta-row .wp-btn:not(.wp-btn-primary):hover {
+      color: var(--wp-fg) !important;
+      background-color: var(--wp-surface2);
+    }
     .wp-btn svg { flex-shrink: 0; }
     .wp-list { display: flex; flex-direction: column; gap: 10px; }
     .wp-section {

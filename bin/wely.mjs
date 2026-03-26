@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
+import { Command } from 'commander'
 import { execSync } from 'node:child_process'
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { basename, join, relative, resolve } from 'node:path'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = process.cwd()
-const WELY_PKG = resolve(fileURLToPath(import.meta.url), '..', '..')
+const WELY_PKG = resolve(__dirname, '..')
 const DEFAULT_COMPONENTS_DIR = 'src/wely-components'
 const DEFAULT_OUT_DIR = 'dist'
 
@@ -43,39 +45,13 @@ function getComponentsDirRel() {
   return relative(ROOT, getComponentsDir()).replace(/\\/g, '/')
 }
 
-const [, , command, ...args] = process.argv
-
-const commands = {
-  init,
-  build,
-  export: exportCmd,
-  page: pageCmd,
-  create,
-  sync,
-  list,
-  docs,
-  dev,
-  test: testCmd,
-  help,
-}
-
-const handler = commands[command]
-if (!handler) {
-  if (command) console.error(`Unknown command: ${command}\n`)
-  help()
-  process.exit(command ? 1 : 0)
-}
-
-handler()
-
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
 
-function build() {
-  const flags = parseFlags(args)
-  const isBundle = flags.bundle === true
-  const isChunks = flags.chunks === true
+function build(opts = {}) {
+  const isBundle = opts.bundle === true
+  const isChunks = opts.chunks === true
   const hasViteConfig = existsSync(join(ROOT, 'vite.config.ts')) || existsSync(join(ROOT, 'vite.config.js'))
 
   if (hasViteConfig) {
@@ -106,8 +82,8 @@ function build() {
 
   printDist()
 
-  if (flags.export) {
-    copyTo(flags.export)
+  if (opts.export) {
+    copyTo(opts.export)
   }
 }
 
@@ -209,16 +185,13 @@ export default defineConfig({
   }
 }
 
-function exportCmd() {
-  const flags = parseFlags(args)
-  const target = args.find((a) => !a.startsWith('-'))
-
+function exportCmd(target, opts) {
   if (!target) {
     console.error('  Usage: wely export <target-path> [--no-build] [--clean]\n')
     process.exit(1)
   }
 
-  if (!flags['no-build']) {
+  if (opts.build !== false) {
     console.log('\n  Building wely...\n')
     run(getViteCmd('build'))
   }
@@ -231,7 +204,7 @@ function exportCmd() {
 
   const dest = resolve(process.cwd(), target)
 
-  if (flags.clean && existsSync(dest)) {
+  if (opts.clean && existsSync(dest)) {
     rmSync(dest, { recursive: true })
     console.log(`  Cleaned ${dest}`)
   }
@@ -284,10 +257,7 @@ function pageCmd() {
   console.log('\n  Push docs/ and enable Pages (Settings → Pages → Source: /docs)\n')
 }
 
-function create() {
-  const tag = args.find((a) => !a.startsWith('-'))
-  const flags = parseFlags(args)
-
+function create(tag, opts) {
   if (!tag) {
     console.error('  Usage: wely create <tag> [--props key:Type,...] [--actions name,...]\n')
     console.error('  Example: wely create w-card --props title:String,count:Number --actions toggle,reset\n')
@@ -304,13 +274,13 @@ function create() {
   const componentsDir = getComponentsDir()
   const filePath = join(componentsDir, `${tag}.ts`)
 
-  if (existsSync(filePath) && !flags.force) {
+  if (existsSync(filePath) && !opts.force) {
     console.error(`  ${tag}.ts already exists. Use --force to overwrite.\n`)
     process.exit(1)
   }
 
-  const propsInput = flags.props ? String(flags.props).split(',') : []
-  const actionsInput = flags.actions ? String(flags.actions).split(',') : []
+  const propsInput = opts.props ? String(opts.props).split(',') : []
+  const actionsInput = opts.actions ? String(opts.actions).split(',') : []
 
   const source = generateComponent(tag, propsInput, actionsInput)
   writeFileSync(filePath, source)
@@ -344,7 +314,7 @@ function list() {
   console.log()
 }
 
-function docs() {
+function docs(opts) {
   ensureComponentsDir()
   const tags = scanComponents()
 
@@ -353,9 +323,8 @@ function docs() {
     return
   }
 
-  const flags = parseFlags(args)
-  const outPath = flags.out
-    ? resolve(process.cwd(), String(flags.out))
+  const outPath = opts.out
+    ? resolve(process.cwd(), String(opts.out))
     : join(ROOT, 'COMPONENTS.md')
 
   const lines = []
@@ -457,65 +426,13 @@ function dev() {
 
 
 
-function testCmd() {
-  const isWatch = !args.includes('--run')
+function testCmd(opts) {
+  const isWatch = !opts.run
   if (isWatch) {
     run('npx vitest', { stdio: 'inherit' })
   } else {
     run('npx vitest run', { stdio: 'inherit' })
   }
-}
-
-function help() {
-  console.log(`
-  wely — Lightweight Web Component Framework CLI
-
-  Usage:
-    wely <command> [options]
-
-  Commands:
-    init                          Create wely.config.ts and add wely to package.json
-    create <tag>                 Scaffold a new component
-      --props key:Type,...       Add props (e.g. title:String,count:Number)
-      --actions name,...         Add actions (e.g. toggle,reset)
-      --force                   Overwrite if file exists
-
-    sync                         Regenerate src/components/index.ts from existing files
-    list                         List all registered components
-    docs                         Generate COMPONENTS.md from component source files
-      --out <path>               Write to a custom path instead of COMPONENTS.md
-
-    build                        Build the library (runtime only by default)
-      --bundle                   Include components in output (runtime + components)
-      --chunks                   Split into vendor, runtime, components chunks (cache-friendly)
-      --all                      Build both library and bundle
-      --export <path>            Also copy output to <path> after building
-
-    page                         Build static page for GitHub Pages → docs/
-
-    export <path>                Build and copy output to <path>
-      --no-build                 Skip build, copy existing output only
-      --clean                    Remove target directory before copying
-
-    dev                          Start Vite dev server with playground
-    test                         Run Vitest in watch mode
-      --run                      Single run (no watch)
-
-    help                         Show this message
-
-  Config (package.json → "wely"):
-    componentsDir                Component files directory (default: src/wely-components)
-    outDir                       Build output directory (default: dist)
-
-  Examples:
-    wely init
-    wely create w-card
-    wely create w-user-list --props name:String,age:Number --actions refresh
-    wely sync
-    wely list
-    wely build
-    wely export ../my-app/public/vendor/wely
-`)
 }
 
 // ---------------------------------------------------------------------------
@@ -673,24 +590,6 @@ function run(cmd, opts = {}) {
   }
 }
 
-function parseFlags(argv) {
-  const flags = {}
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]
-    if (arg.startsWith('--')) {
-      const key = arg.slice(2)
-      const next = argv[i + 1]
-      if (next && !next.startsWith('-')) {
-        flags[key] = next
-        i++
-      } else {
-        flags[key] = true
-      }
-    }
-  }
-  return flags
-}
-
 function copyTo(dest) {
   const outDir = getOutDir()
   const outRel = getOutDirRel()
@@ -736,3 +635,91 @@ function printDist() {
   }
   console.log()
 }
+
+// ---------------------------------------------------------------------------
+// CLI (Commander)
+// ---------------------------------------------------------------------------
+
+const pkgJson = JSON.parse(readFileSync(join(WELY_PKG, 'package.json'), 'utf-8'))
+
+const program = new Command()
+program
+  .name('wely')
+  .description('Lightweight Web Component framework CLI')
+  .version(pkgJson.version, '-v, --version', 'output the version number')
+  .configureHelp({ sortSubcommands: true })
+  .showHelpAfterError('(add --help for usage)')
+  .addHelpText(
+    'after',
+    `
+Config (package.json → "wely"):
+  componentsDir    Component files directory (default: src/wely-components)
+  outDir           Build output directory (default: dist)
+
+Examples:
+  $ wely init
+  $ wely create w-card
+  $ wely create w-user-list --props name:String,age:Number --actions refresh
+  $ wely sync && wely list
+  $ wely build
+  $ wely export ../my-app/public/vendor/wely
+`,
+  )
+
+program.addHelpCommand('help [command]', 'display help for command')
+
+program.command('init').description('Create wely.config.ts and ensure wely is in package.json').action(init)
+
+program
+  .command('create <tag>')
+  .description('Scaffold a new component')
+  .option('--props <spec>', 'key:Type pairs, comma-separated (e.g. title:String,count:Number)')
+  .option('--actions <names>', 'action names, comma-separated (e.g. toggle,reset)')
+  .option('--force', 'overwrite existing file')
+  .action(create)
+
+program.command('sync').description('Regenerate components index from existing files').action(sync)
+
+program.command('list').description('List registered components').action(list)
+
+program
+  .command('docs')
+  .description('Generate COMPONENTS.md from component source files')
+  .option('--out <path>', 'write to a custom path instead of COMPONENTS.md')
+  .action(docs)
+
+program
+  .command('build')
+  .description('Build the library (runtime only by default when using vite.config.ts)')
+  .option('--bundle', 'include components in output (runtime + components)')
+  .option('--chunks', 'split into vendor, runtime, and components chunks')
+  .option('--all', 'build both library and bundle')
+  .option('--export <path>', 'copy build output to destination after build')
+  .action(build)
+
+program
+  .command('page')
+  .description('Build static demo page for GitHub Pages into docs/')
+  .action(pageCmd)
+
+program
+  .command('export <target>')
+  .description('build and copy dist output to a target directory')
+  .option('--no-build', 'skip build, copy existing dist only')
+  .option('--clean', 'remove target directory before copying')
+  .action(exportCmd)
+
+program.command('dev').description('Start Vite dev server (playground when no local vite.config)').action(dev)
+
+program
+  .command('test')
+  .description('Run Vitest (watch mode by default)')
+  .option('--run', 'single run, no watch')
+  .action(testCmd)
+
+if (process.argv.length <= 2) {
+  program.outputHelp()
+  process.exit(0)
+}
+
+program.parse(process.argv)
