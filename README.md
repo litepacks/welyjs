@@ -2,7 +2,7 @@
 
 A lightweight Web Component framework built on a single `defineComponent()` factory function. No class syntax, no framework lock-in — just plain config objects that produce native custom elements.
 
-Lit powers the rendering engine internally but is never exposed to consumers. Developers interact exclusively through the Wely API.
+Wely core powers the rendering engine internally and is never exposed to consumers. Developers interact exclusively through the Wely API.
 
 ## Why Wely?
 
@@ -78,7 +78,7 @@ The same component works in all of these without modification.
 
 ### Bundle Size
 
-Wely produces minimal bundles. Runtime includes Lit, our API (defineComponent, store, resource, fetch), and Tailwind CSS. All sizes below are **minified + gzipped**.
+Wely produces minimal bundles. Runtime includes the Wely core renderer, API surface (`defineComponent`, store, resource, fetch), and Tailwind CSS. All sizes below are **minified + gzipped**.
 
 | Build | Size (min+gzip) |
 |-------|-----------------|
@@ -93,6 +93,65 @@ Wely produces minimal bundles. Runtime includes Lit, our API (defineComponent, s
 **Pay for what you use** — Wely bundles only what you import. Add one component → ~13 KB. Add five → ~15 KB. No framework runtime at the consumer; output is native Web Components. Tree-shaking keeps the bundle minimal: unused components never land in the final file.
 
 **Smaller bundles** — Consumer builds use esbuild minify (fast). For ~5–15% smaller output, add a custom `vite.config` with `minify: 'terser'` and `terser` as a devDependency. The Wely repo uses Terser for published builds.
+
+## DX Quickstart
+
+One-command setup, diagnosis, embed, and CI — all through the Wely CLI.
+
+```bash
+# New project — scaffold, install, sample component, first build
+wely setup
+
+# Diagnose setup issues (Node, welyjs, componentsDir, dist, configs)
+wely doctor
+wely doctor --json          # machine-readable for CI
+
+# Auto-discover components (no manual bundle.ts import chain)
+# Enabled by default after `wely init` via package.json → wely.autoComponents
+wely build                  # respects wely.autoComponents
+wely build --no-auto-components
+
+# Plain HTML embed scaffold (defer + wely.ready boot)
+wely embed                  # → html-usage/index.html
+
+# Framework integration snippets
+wely add react
+wely add vue
+
+# Fast loops
+wely test --changed         # only tests for git-changed components
+wely docs --watch           # regenerate COMPONENTS.md on save
+
+# Local CI pipeline (build + test + docs + dist verify)
+wely ci
+wely ci --json
+```
+
+**`package.json` → `wely` config:**
+
+```json
+{
+  "wely": {
+    "componentsDir": "src/wely-components",
+    "autoComponents": true,
+    "componentExclude": ["**/*.stories.ts"]
+  }
+}
+```
+
+**Plain HTML / script tag loading** — use `defer` and `wely.ready()` so markup and bundle order never race:
+
+```html
+<script src="dist/wely.bundle.umd.js" defer></script>
+<w-hello msg="World"></w-hello>
+<script>
+  wely.ready('w-hello').then(() => {
+    // component defined, DOM parsed, element upgraded
+  });
+</script>
+```
+
+Dynamic injection: `import { loadScript } from 'welyjs'` then `await loadScript('/dist/wely.bundle.umd.js')`.
 
 ## Quick Start
 
@@ -147,7 +206,7 @@ Two different “build” stories exist on purpose:
 |--------|---------|------------------|
 | **Published npm package** | `npm run build` in this repo (runs before `npm publish`) | **Runtime only** — `wely.es.js` / `wely.umd.js` from `src/runtime/index.ts`. Showcase components under `src/components/` are **not** part of this artifact. |
 | **Runtime + your components** | In an app: `wely build` (or `wely build --bundle` / `--chunks` with a custom Vite config) | **Your** `src/bundle.ts` entry: re-exports `welyjs` plus imports your component folder — this is what you ship or drop into a page. |
-| **Demo / tests / docs** | `npm run build:bundle` or `build:chunks` in this repo | **Runtime + repo demo components** via `src/demo-bundle.ts` (used for browser tests, `wely page`, etc.). |
+| **Demo / tests / docs** | `npm run build:bundle` or `build:chunks` in this repo | **Runtime + repo demo components** via `src/demo-bundle.ts` (browser tests; `wely page` copies the UMD bundle into `docs/assets/`). |
 
 So: **npm install welyjs** gives you the framework runtime; **your project’s** `wely build` produces the bundle that includes your custom elements. The repo’s extra bundle targets exist for demos and CI, not as the default published surface.
 
@@ -287,7 +346,7 @@ Registers a native custom element. Accepts a `ComponentDef` object:
 | `tag` | `string` | Custom element tag name (must contain a hyphen) |
 | `props` | `Record<string, PropType>` | Attribute-synced properties (`String`, `Number`, `Boolean`, `Array`, `Object`) |
 | `devInfo` | `boolean \| { version?: string }` | When `true` (default), adds `data-wely-version` and `data-wely-mounted` attributes for dev tools. Set `false` to disable. Pass `{ version: '1.2.3' }` to override per component. |
-| `styles` | `CSSResult \| CSSResult[]` | Component-scoped styles via Lit's `css` helper |
+| `styles` | `CSSResult \| CSSResult[]` | Component-scoped styles via Wely `css` helper |
 | `state()` | `() => S` | Factory that returns initial reactive state |
 | `actions` | `Record<string, (ctx, event?) => void>` | Named action handlers. Use in templates: `@input=${ctx.actions.onSearch}` — second param is the DOM event; `event.target` gives the element. |
 | `setup(ctx)` | `(ctx) => void` | Called once when the element first connects |
@@ -513,13 +572,13 @@ getComponent('w-counter')   // ComponentDef | undefined
 getAllComponents()           // Map<string, ComponentDef>
 ```
 
-### Re-exported from Lit
+### Core Template API
 
 ```ts
 import { html, css, nothing } from 'welyjs'
 ```
 
-These are the only Lit symbols exposed. `LitElement` and all other internals remain hidden.
+These are the only template symbols exposed. Internal renderer details stay hidden.
 
 ### Browser Access
 
@@ -671,7 +730,7 @@ Tailwind CSS v4 is integrated at two levels:
 1. **Playground / host page** — import `src/styles/tailwind.css` normally.
 2. **Inside Shadow DOM** — Tailwind is compiled to a constructable `CSSStyleSheet` and automatically adopted into every component's shadow root via `adoptedStyleSheets`. Utility classes work inside component templates out of the box.
 
-Components also accept a `styles` field for scoped CSS using Lit's `css` helper:
+Components also accept a `styles` field for scoped CSS using Wely's `css` helper:
 
 ```ts
 import { defineComponent, html, css } from 'welyjs'
@@ -711,7 +770,7 @@ wely init
 npm install
 ```
 
-On first `wely build` or `wely dev`, the CLI creates `src/bundle.ts`, `src/wely-components/index.ts`, and other files as needed.
+`wely init` now creates `src/bundle.ts` and `src/wely-components/index.ts` up front, so first build/dev run starts from a complete scaffold.
 
 **Components directory** — Components are created in `src/wely-components` by default (Wely-branded path to avoid collisions). Override via `package.json`:
 
@@ -765,11 +824,11 @@ wely docs --out docs/api.md
 |---|---|---|---|
 | **Library** (default) | `wely build` | `wely.es.js` + `wely.umd.js` | Wely repo — consumers import runtime |
 | **Bundle** | `wely build --bundle` | `wely.bundle.es.js` + `wely.bundle.umd.js` | Runtime + components in one file |
-| **Chunked** | `wely build --chunks` | `wely.chunked.es.js` + `chunks/*.js` | Vendor, runtime, components split — cache-friendly |
+| **Chunked** | `wely build --chunks` | `wely.chunked.es.js` (+ optional `chunks/*.js`) | Runtime and components split when needed — cache-friendly |
 | **Minimal** | `wely build` (no vite.config) | `wely.bundle.*.js` | Consumer project — bundle by default |
 | **All** | `wely build --all` | Both sets | Publish both variants |
 
-**Chunked build** — Splits output into `vendor` (Lit), `runtime` (Wely API), and `components` (your components). The browser loads chunks in parallel; when you update components, only the components chunk changes. Use: `<script type="module" src="wely.chunked.es.js"></script>`. Copy the entire `dist/` folder (including `chunks/`) when deploying.
+**Chunked build** — Splits output into `runtime` (Wely API/core) and `components` when chunking is beneficial. The browser can cache stable runtime code while component updates stay isolated. Use: `<script type="module" src="wely.chunked.es.js"></script>`. If `chunks/` is generated, deploy it together with `wely.chunked.es.js`.
 
 ```bash
 # Minimal project (no vite.config) — bundle mode automatically
@@ -778,7 +837,7 @@ wely build
 # Full repo with vite.config
 wely build                  # library only
 wely build --bundle         # runtime + components
-wely build --chunks         # split into vendor, runtime, components
+wely build --chunks         # split into runtime/components when needed
 wely build --all            # both
 
 # Export to another project (builds first by default)
@@ -803,7 +862,7 @@ npm run test:browser # Playwright — real browser render tests
 
 **`wely dev`** — Starts the playground at `localhost:5173` (or next available port). Creates `index.html`, `src/playground/main.ts`, and `src/styles/tailwind.css` on first run. All components are auto-rendered; new components added with `wely create` appear via HMR.
 
-**`wely test`** — Runs Vitest (`npx vitest` in watch mode, or `npx vitest run` with `--run`). Add **`vitest`** and **`jsdom`** as devDependencies (`wely init` adds them and a `test` script). If your project has no `vitest.config.*` and no `vite.config.*`, the CLI passes `welyjs`’s bundled `vitest.consumer.config.ts` so Vitest does not walk up the filesystem and load another repo’s Vite config (a common issue in nested or monorepo-style folders). The default includes `src/**/*.test.ts` and `src/**/*.spec.ts`, `environment: 'jsdom'`, `passWithNoTests: true`. Add your own `vitest.config.ts` or `vite.config.ts` when you need custom resolution, aliases, or coverage.
+**`wely test`** — Runs Vitest (`npx vitest` in watch mode, or `npx vitest run` with `--run`). Add **`vitest`** and **`jsdom`** as devDependencies (`wely init` adds them and a `test` script). In test files, import primitives and helpers from **`welyjs/test`** (re-exports Vitest’s `describe`, `it`, `expect`, etc., plus `getComponentContext`, `appendComponent`, `withHost`) so the test API stays aligned with the framework. If your project has no `vitest.config.*` and no `vite.config.*`, the CLI passes `welyjs`’s bundled `vitest.consumer.config.ts` so Vitest does not walk up the filesystem and load another repo’s Vite config. The default includes `src/**/*.test.ts` and `src/**/*.spec.ts`, `environment: 'jsdom'`, `passWithNoTests: true`. Add your own `vitest.config.ts` or `vite.config.ts` when you need custom resolution, aliases, or coverage.
 
 Run via npm script:
 
@@ -821,12 +880,14 @@ wely build --export ~/projects/my-app/public/vendor/wely
 
 ### GitHub Pages
 
-Build the project landing page for GitHub Pages:
+Keep your site as **one static page** (`docs/index.html`). Run **`wely page` from the project root** (same cwd as `wely build`). If `docs/index.html` is missing, the CLI creates a **minimal** landing page once; existing files are never overwritten. The command builds your component bundle and copies **`dist/wely.bundle.umd.js` → `docs/assets/wely.bundle.umd.js`**. In projects **without** a local `vite.config`, the CLI uses the same bundled Vite config as `wely build` (so you do not need a root `index.html` for the build step).
 
 ```bash
 wely page
-# → docs/index.html (static page describing the repo)
+# → creates docs/index.html if needed; updates docs/assets/wely.bundle.umd.js
 ```
+
+Playground screenshots under `docs/assets/playground/` (optional): `npm run docs:playground-ss` from the Wely repo (requires a running dev server; the script starts one).
 
 Then push and enable: **Settings → Pages → Source: Deploy from a branch → /docs**.
 
@@ -844,7 +905,7 @@ import { defineComponent, html } from 'welyjs'
 
 **Consumer project** — With `wely init` + `wely build` (no vite.config), you create a bundle with your own components. `dist/wely.bundle.*.js` contains your runtime plus your components.
 
-**Bundle size optimization** — The default build uses esbuild minify (consumer) or terser (Wely repo). For smaller production bundles: (1) Use `wely build --chunks` — splits vendor/runtime/components so the browser caches Lit and Wely separately; component updates only invalidate the components chunk. (2) With a custom `vite.config`, add `minify: 'terser'` and `terserOptions: { compress: { drop_console: true } }` to strip `console.*` calls — terser typically yields ~5–15% smaller output than esbuild. (3) Ensure `build.target` matches your lowest supported browser to avoid unnecessary polyfills.
+**Bundle size optimization** — The default build uses esbuild minify (consumer) or terser (Wely repo). For smaller production bundles: (1) Use `wely build --chunks` to isolate runtime/core code from fast-changing component code. (2) With a custom `vite.config`, add `minify: 'terser'` and `terserOptions: { compress: { drop_console: true } }` to strip `console.*` calls — terser typically yields ~5–15% smaller output than esbuild. (3) Ensure `build.target` matches your lowest supported browser to avoid unnecessary polyfills.
 
 ## Browser Support
 
@@ -894,7 +955,7 @@ build: {
 - JSON-driven component rendering via the registry
 - Plugin hooks (before/after `defineComponent`)
 - Backend-driven UI composition
-- SSR hydration (via `@lit-labs/ssr`)
+- SSR hydration
 - AI-generated component definitions
 
 ## Tech Stack
@@ -902,7 +963,7 @@ build: {
 | Layer | Tool |
 |---|---|
 | Language | TypeScript |
-| Rendering | Lit (internal) |
+| Rendering | Wely core renderer (internal) |
 | Styling | Tailwind CSS v4 |
 | Dev / Build | Vite |
 | Testing | Vitest + jsdom |

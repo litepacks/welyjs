@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'welyjs/test'
 import { registerComponent, getComponent, getAllComponents } from '../registry'
 import type { ComponentDef } from '../defineComponent'
 

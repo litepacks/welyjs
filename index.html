@@ -46,8 +46,8 @@
       min-height: 100vh;
       transition: background .2s, color .2s;
     }
-    .wp-shell { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem; }
-    .wp-app { display: flex; flex-direction: column; gap: 1.25rem; }
+    .wp-shell { max-width: 960px; margin: 0 auto; padding: 2.75rem 1.5rem 3rem; }
+    .wp-app { display: flex; flex-direction: column; gap: 1.75rem; }
     .wp-header-row {
       display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
     }
@@ -63,6 +63,70 @@
     .wp-nav-link.wp-nav-active { background: var(--wp-surface2); color: var(--wp-accent); font-weight: 600; }
     .wp-theme-btn { flex-shrink: 0; }
     #wp-main { min-height: 200px; }
+    .wp-view-home {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      max-width: 40rem;
+      padding-top: 0.25rem;
+    }
+    .wp-home-hero { display: flex; flex-direction: column; gap: 0.75rem; }
+    .wp-home-title {
+      font-size: clamp(1.35rem, 3vw, 1.65rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      color: var(--wp-fg);
+    }
+    .wp-home-lead {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--wp-muted);
+      max-width: 36rem;
+    }
+    .wp-home-grid {
+      display: grid;
+      gap: 12px;
+    }
+    @media (min-width: 640px) {
+      .wp-home-grid { grid-template-columns: repeat(3, 1fr); }
+      .wp-view-home { max-width: none; }
+    }
+    .wp-home-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1.125rem 1.25rem 1.25rem;
+      border-radius: 12px;
+      border: 1px solid var(--wp-border);
+      background: var(--wp-surface);
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    .wp-home-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.35;
+      color: var(--wp-fg);
+    }
+    .wp-home-card-body {
+      margin: 0;
+      flex: 1;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--wp-muted);
+    }
+    .wp-home-card-btn { align-self: flex-start; margin-top: 0.5rem; }
+    .wp-home-hint {
+      margin: 0;
+      padding-top: 0.25rem;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--wp-muted);
+      max-width: 36rem;
+    }
+    .wp-home-hint strong { color: var(--wp-fg); font-weight: 600; }
     .wp-view-docs .wp-shell-inner { max-width: 720px; }
     .wp-lead { font-size: 15px; line-height: 1.55; color: var(--wp-fg); margin-bottom: 1rem; }
     .wp-muted { font-size: 13px; color: var(--wp-muted); line-height: 1.5; margin-top: 1rem; }

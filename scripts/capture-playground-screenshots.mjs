@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Captures playground screenshots for docs/ (run from repo root after npm install).
- * Usage: node scripts/capture-playground-screenshots.mjs
+ * Usage: npm run docs:playground-ss   (or: node scripts/capture-playground-screenshots.mjs)
  */
 import { mkdirSync } from 'node:fs'
 import { spawn } from 'node:child_process'

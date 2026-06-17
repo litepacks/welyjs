@@ -1,5 +1,5 @@
-import { LitElement } from 'lit'
-import type { CSSResult } from 'lit'
+import type { CSSResult } from './core'
+import { WelyElement } from './core'
 import { getConfig } from './config'
 import { registerComponent } from './registry'
 import { createResource } from './resource'
@@ -14,7 +14,22 @@ export type { ComponentContext, ComponentDef } from './types'
 // Helpers
 // ---------------------------------------------------------------------------
 
-function toLitPropertyType(ctor: PropType) {
+function parsePropValue(host: HTMLElement, key: string, ctor: PropType): unknown {
+  const attr = host.getAttribute(key)
+  if (ctor === Number) return attr == null ? undefined : Number(attr)
+  if (ctor === Boolean) return host.hasAttribute(key)
+  if (ctor === Array || ctor === Object) {
+    if (attr == null) return undefined
+    try {
+      return JSON.parse(attr)
+    } catch {
+      return undefined
+    }
+  }
+  return attr == null ? undefined : attr
+}
+
+function toObservedAttribute(ctor: PropType) {
   switch (ctor) {
     case Number:
       return { type: Number, reflect: true }
@@ -52,21 +67,21 @@ function createReactiveState<S extends Record<string, unknown>>(
 export function defineComponent<
   P extends Record<string, unknown> = Record<string, unknown>,
   S extends Record<string, unknown> = Record<string, unknown>,
-  A extends Record<string, (ctx: ComponentContext<P, S, any>) => void> = Record<string, (ctx: ComponentContext<P, S>) => void>,
+  A extends Record<string, (ctx: ComponentContext<P, S, any>, event?: Event) => void> = Record<string, (ctx: ComponentContext<P, S>, event?: Event) => void>,
 >(def: ComponentDef<P, S, A>): void {
   const propsDef = def.props ?? {}
 
-  const litProps: Record<string, ReturnType<typeof toLitPropertyType>> = {}
+  const observedProps: Record<string, ReturnType<typeof toObservedAttribute>> = {}
   for (const [key, ctor] of Object.entries(propsDef)) {
-    litProps[key] = toLitPropertyType(ctor)
+    observedProps[key] = toObservedAttribute(ctor)
   }
 
   const componentStyles: CSSResult[] = def.styles
     ? Array.isArray(def.styles) ? def.styles : [def.styles]
     : []
 
-  class GeneratedElement extends LitElement {
-    static override properties = litProps
+  class GeneratedElement extends WelyElement {
+    static override observedAttributes = Object.keys(observedProps)
     static override styles = componentStyles
 
     private _ctx!: ComponentContext<P, S, A>
@@ -75,10 +90,6 @@ export function defineComponent<
 
     constructor() {
       super()
-
-      for (const key of Object.keys(propsDef)) {
-        (this as any)[key] = undefined
-      }
     }
 
     private _buildCtx(): ComponentContext<P, S, A> {
@@ -86,7 +97,9 @@ export function defineComponent<
 
       const propsProxy = new Proxy({} as P, {
         get(_target, key: string) {
-          return (host as any)[key]
+          const ctor = propsDef[key]
+          if (!ctor) return undefined
+          return parsePropValue(host, key, ctor)
         },
       })
 
@@ -152,6 +165,10 @@ export function defineComponent<
       if (def.connected) def.connected(this._ctx)
     }
 
+    override attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+      super.attributeChangedCallback(name, oldValue, newValue)
+    }
+
     private _applyDevInfo(): void {
       if (def.devInfo === false) return
       const cfg = getConfig()
@@ -177,13 +194,12 @@ export function defineComponent<
     }
 
     override disconnectedCallback(): void {
-      super.disconnectedCallback()
       if (def.disconnected) def.disconnected(this._ctx)
       for (const cleanup of this._cleanups) cleanup()
       this._cleanups = []
     }
 
-    override render() {
+    protected override renderTemplate() {
       if (!this._ctx) {
         this._ctx = this._buildCtx()
         if (def.setup) def.setup(this._ctx)

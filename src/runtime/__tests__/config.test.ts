@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach } from 'welyjs/test'
 import { defineConfig, getConfig, useConfig, resetConfig } from '../config'
 
 beforeEach(() => {

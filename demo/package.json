@@ -1,0 +1,22 @@
+{
+  "name": "wely-cli-demo",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wely dev",
+    "build": "wely build",
+    "test": "wely test"
+  },
+  "dependencies": {
+    "welyjs": "file:.."
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18",
+    "jsdom": "^28.1.0",
+    "esbuild": "^0.25.0"
+  },
+  "wely": {
+    "componentsDir": "src/wely-components",
+    "autoComponents": true
+  }
+}

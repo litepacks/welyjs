@@ -10,6 +10,8 @@ import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
+import { welyConsumerResolve } from './src/build/wely-vite-resolve'
+import { welyTailwindPlugin, WELY_TAILWIND_VIRTUAL } from './src/build/wely-tailwind-plugin'
 
 const pkgDir = dirname(fileURLToPath(import.meta.url))
 
@@ -23,7 +25,35 @@ const configPathResolved = process.env.WELY_CONFIG_PATH
   ? resolve(process.env.WELY_CONFIG_PATH)
   : join(root, 'wely.config.ts')
 
-/** Vite cannot reliably resolve `import(absPath)` for consumer dirs; map to the real index module. */
+function readWelyPackageConfig() {
+  try {
+    return JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8')).wely ?? {}
+  } catch {
+    return {}
+  }
+}
+
+function buildComponentExcludeGlobs(base: string) {
+  const normalized = '/' + base.replace(/^\/+/, '').replace(/\/+$/, '')
+  const defaults = [
+    '!' + normalized + '/**/index.ts',
+    '!' + normalized + '/**/*.test.ts',
+    '!' + normalized + '/**/*.spec.ts',
+  ]
+  const custom = readWelyPackageConfig().componentExclude
+  if (!Array.isArray(custom)) return defaults
+  const extra = custom.map((p: unknown) => {
+    const s = String(p)
+    if (s.startsWith('!')) return s
+    return '!' + normalized + '/' + s.replace(/^\//, '')
+  })
+  return [...defaults, ...extra]
+}
+
+const useAutoComponents = process.env.WELY_AUTO_COMPONENTS !== '0'
+  && (process.env.WELY_AUTO_COMPONENTS === '1' || readWelyPackageConfig().autoComponents === true)
+
+/** Virtual module that discovers consumer components via glob imports. */
 const WELY_COMPONENTS_VIRTUAL = 'virtual:wely-components'
 
 function buildPlaygroundHtml(virtualEntry: string): string {
@@ -36,12 +66,25 @@ function buildPlaygroundHtml(virtualEntry: string): string {
 function welyPlaygroundPlugin() {
   const VIRTUAL_ENTRY = 'virtual:wely-playground'
   const RESOLVED_ENTRY = '\0' + VIRTUAL_ENTRY
-  const VIRTUAL_CSS = 'virtual:wely-dev.css'
-  const RESOLVED_CSS = '\0' + VIRTUAL_CSS
+  const RESOLVED_COMPONENTS = '\0' + WELY_COMPONENTS_VIRTUAL
+  const componentGlobBase = '/' + componentsRelToRoot.replace(/^\/+/, '').replace(/\/+$/, '')
+  const excludeGlobs = buildComponentExcludeGlobs(componentsRelToRoot)
+
+  const componentsLoaderJs = useAutoComponents
+    ? `
+const __welyComponents = import.meta.glob([
+  ${JSON.stringify(componentGlobBase + '/**/*.ts')},
+  ${excludeGlobs.map((g) => JSON.stringify(g)).join(',\n  ')},
+], { eager: true })
+void __welyComponents
+`
+    : `
+import ${JSON.stringify(join(root, 'src/bundle.ts'))}
+`
 
   const playgroundJs = `
 import ${JSON.stringify(configPathResolved)}
-import '${VIRTUAL_CSS}'
+import ${JSON.stringify(WELY_TAILWIND_VIRTUAL)}
 import { mountApp } from 'welyjs/playground/app'
 await import(${JSON.stringify(WELY_COMPONENTS_VIRTUAL)})
 mountApp()
@@ -49,20 +92,17 @@ mountApp()
 
   const playgroundHtml = buildPlaygroundHtml(VIRTUAL_ENTRY)
 
-  const tailwindCss = `@import "tailwindcss";\n@source "${componentsRelToRoot}/**/*.ts";\n`
-
   return {
     name: 'wely-playground',
 
     resolveId(id) {
       if (id === VIRTUAL_ENTRY || id === '/' + VIRTUAL_ENTRY) return RESOLVED_ENTRY
-      if (id === VIRTUAL_CSS) return RESOLVED_CSS
-      if (id === WELY_COMPONENTS_VIRTUAL) return join(componentsDirAbs, 'index.ts')
+      if (id === WELY_COMPONENTS_VIRTUAL) return RESOLVED_COMPONENTS
     },
 
     load(id) {
       if (id === RESOLVED_ENTRY) return playgroundJs
-      if (id === RESOLVED_CSS) return tailwindCss
+      if (id === RESOLVED_COMPONENTS) return componentsLoaderJs
     },
 
     configureServer(server) {
@@ -87,12 +127,14 @@ export default defineConfig({
   root,
   resolve: {
     alias: {
+      ...welyConsumerResolve(root),
       /** Vite 7 import-analysis expects an explicit export; point at package source inside welyjs. */
       'welyjs/playground/app': join(pkgDir, 'src/playground/app.ts'),
     },
   },
   plugins: [
     welyPlaygroundPlugin(),
+    welyTailwindPlugin({ root, welyPkgDir: pkgDir }),
     tailwindcss(),
   ],
 })

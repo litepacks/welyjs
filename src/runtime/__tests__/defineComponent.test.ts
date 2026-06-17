@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest'
-import { html } from 'lit'
+import { describe, it, expect, vi } from 'welyjs/test'
+import { html, css } from '../index'
 import { defineComponent } from '../defineComponent'
 import { getComponent } from '../registry'
 import { defineConfig, resetConfig } from '../config'
@@ -281,6 +281,74 @@ describe('defineComponent', () => {
     await wait(50)
 
     expect(setupStart).toBe(10)
+
+    el.remove()
+  })
+
+  it('renders slot content from light DOM', async () => {
+    defineComponent({
+      tag: 'w-test-slot',
+      render: () => html`<div><slot></slot></div>`,
+    })
+
+    const el = document.createElement('w-test-slot')
+    el.textContent = 'inside'
+    document.body.appendChild(el)
+    await wait(50)
+
+    const slot = el.shadowRoot?.querySelector('slot')
+    expect(slot).toBeDefined()
+    expect((slot as HTMLSlotElement).assignedNodes().length).toBeGreaterThan(0)
+
+    el.remove()
+  })
+
+  it('applies component styles with css helper', async () => {
+    defineComponent({
+      tag: 'w-test-styles',
+      styles: css`:host{display:block;}`,
+      render: () => html`<span>ok</span>`,
+    })
+
+    const el = document.createElement('w-test-styles')
+    document.body.appendChild(el)
+    await wait(50)
+
+    const styleTag = el.shadowRoot?.querySelector('style')
+    const adopted = el.shadowRoot?.adoptedStyleSheets ?? []
+    expect(Boolean(styleTag) || adopted.length > 0).toBe(true)
+
+    el.remove()
+  })
+
+  it('updates .value bindings on re-render', async () => {
+    defineComponent({
+      tag: 'w-test-prop-binding',
+      state: () => ({ value: 'first' }),
+      actions: {
+        change(ctx) {
+          ctx.state.value = 'second'
+        },
+      },
+      render(ctx) {
+        return html`
+          <input id="field" .value=${ctx.state.value} />
+          <button id="go" @click=${ctx.actions.change}>change</button>
+        `
+      },
+    })
+
+    const el = document.createElement('w-test-prop-binding')
+    document.body.appendChild(el)
+    await wait(50)
+
+    const input = el.shadowRoot?.querySelector('#field') as HTMLInputElement
+    const button = el.shadowRoot?.querySelector('#go') as HTMLButtonElement
+    expect(input.value).toBe('first')
+
+    button.click()
+    await wait(50)
+    expect(input.value).toBe('second')
 
     el.remove()
   })

@@ -1,4 +1,5 @@
 import { getAllComponents } from './registry'
+import { ready, whenReady } from './ready'
 import type { ComponentContext } from './types'
 
 export interface WelyBridge {
@@ -8,6 +9,13 @@ export interface WelyBridge {
   getAll(tagOrSelector: string): ComponentContext[]
   /** List all registered component tag names. */
   list(): string[]
+  /**
+   * Resolves when the DOM is ready and component tag(s) are defined.
+   * Safe to call after dynamic `<script>` injection — use in `script.onload`.
+   */
+  ready(tag?: string | string[]): Promise<void>
+  /** Callback form of `ready`. Errors are logged to the console. */
+  whenReady(fn: () => void, tag?: string | string[]): void
 }
 
 /**
@@ -34,6 +42,8 @@ export function installBridge(): void {
     list(): string[] {
       return [...getAllComponents().keys()]
     },
+    ready,
+    whenReady,
   }
 
   ;(window as any).wely = bridge

@@ -44,7 +44,7 @@ export function renderDocs(container: HTMLElement) {
   const intro = document.createElement('p')
   intro.className = 'wp-lead'
   intro.textContent =
-    'Add Wely to a page with a module script (bundler or built file), or drop in a UMD bundle. Your project’s wely build produces ES + UMD under dist/.'
+    'Add Wely to a page with a module script (bundler or built file), or drop in a UMD bundle. Run wely build (auto-discovers components by default) or wely embed for a plain HTML scaffold.'
 
   const esm = heading('ES modules (bundler or type="module")', 'h2')
   const esmCode = `import { defineComponent, html } from 'welyjs'
@@ -57,9 +57,14 @@ defineComponent({
 })`
 
   const umd = heading('Classic script (UMD bundle)', 'h2')
-  const umdCode = `<!-- After copying wely.bundle.umd.js from your dist/ folder -->
-<script src="./wely.bundle.umd.js"></script>
-<w-counter start="3"></w-counter>`
+  const umdCode = `<!-- defer: runs after DOM parse; wely.ready() waits for upgrade -->
+<script src="./wely.bundle.umd.js" defer></script>
+<w-counter start="3"></w-counter>
+<script>
+  wely.ready('w-counter').then(function () {
+    // safe: component is defined and upgraded
+  });
+</script>`
 
   const cli = heading('CLI quick reference', 'h2')
   const table = document.createElement('table')
@@ -67,11 +72,16 @@ defineComponent({
   table.innerHTML = `
 <thead><tr><th>Command</th><th>Purpose</th></tr></thead>
 <tbody>
-<tr><td><code>wely init</code></td><td>Create wely.config.ts and ensure welyjs in package.json</td></tr>
-<tr><td><code>wely create w-tag --props x:String</code></td><td>Scaffold a component and sync the index</td></tr>
-<tr><td><code>wely dev</code></td><td>Dev server + this playground</td></tr>
-<tr><td><code>wely build</code></td><td>Bundle runtime + your components (ES + UMD by default)</td></tr>
-<tr><td><code>wely build --chunks</code></td><td>Split vendor / runtime / components chunks (with vite.config)</td></tr>
+<tr><td><code>wely setup</code></td><td>One-shot: init, install, sample component, optional build</td></tr>
+<tr><td><code>wely doctor</code></td><td>Diagnose setup — Node, welyjs, componentsDir, dist (<code>--json</code> for CI)</td></tr>
+<tr><td><code>wely init</code></td><td>Create wely.config.ts, package.json (<code>autoComponents: true</code>)</td></tr>
+<tr><td><code>wely create w-tag --props x:String --test</code></td><td>Scaffold a component (+ optional test) and sync the index</td></tr>
+<tr><td><code>wely dev</code></td><td>Dev server + this playground (auto-discovers components)</td></tr>
+<tr><td><code>wely build</code></td><td>Bundle runtime + components (ES + UMD; respects <code>wely.autoComponents</code>)</td></tr>
+<tr><td><code>wely embed</code></td><td>Generate plain HTML scaffold with <code>defer</code> + <code>wely.ready()</code></td></tr>
+<tr><td><code>wely add react|vue</code></td><td>Framework integration snippet in <code>integrations/</code></td></tr>
+<tr><td><code>wely test --changed</code></td><td>Run tests for git-changed component files</td></tr>
+<tr><td><code>wely ci</code></td><td>Local pipeline: build + test + docs + dist verify</td></tr>
 <tr><td><code>wely export &lt;path&gt;</code></td><td>Copy dist output to another folder</td></tr>
 </tbody>`
 

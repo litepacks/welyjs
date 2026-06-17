@@ -4,16 +4,25 @@
  * Entry: src/bundle.ts (exports wely API + registers components)
  */
 import { defineConfig } from 'vite'
-import { resolve } from 'path'
+import { join, resolve as pathResolve } from 'node:path'
+import { dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
+import { welyConsumerResolve } from './src/build/wely-vite-resolve'
+import { welyTailwindPlugin } from './src/build/wely-tailwind-plugin'
 
 const root = process.cwd()
+const welyPkgDir = dirname(fileURLToPath(import.meta.url))
 const isChunks = process.env.WELY_BUILD_MODE === 'chunks'
-const outDir = process.env.WELY_OUT_DIR || resolve(root, 'dist')
+const outDir = process.env.WELY_OUT_DIR || pathResolve(root, 'dist')
+const bundleEntry = process.env.WELY_BUNDLE_ENTRY || pathResolve(root, 'src/bundle.ts')
 
 export default defineConfig({
   root,
-  plugins: [tailwindcss()],
+  resolve: {
+    alias: welyConsumerResolve(root),
+  },
+  plugins: [welyTailwindPlugin({ root, welyPkgDir }), tailwindcss()],
   build: {
     outDir,
     target: 'es2020',
@@ -21,11 +30,9 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        compact: true,
         ...(isChunks && {
           chunkFileNames: 'chunks/[name].js',
           manualChunks(id) {
-            if (id.includes('node_modules/lit')) return 'vendor'
             if (id.includes('node_modules/welyjs')) return 'runtime'
             if (id.includes(root) && !id.includes('node_modules')) return 'components'
           },
@@ -33,7 +40,7 @@ export default defineConfig({
       },
     },
     lib: {
-      entry: resolve(root, 'src/bundle.ts'),
+      entry: bundleEntry,
       name: 'Wely',
       fileName: (format) => (isChunks ? 'wely.chunked.es' : `wely.bundle.${format}`) + '.js',
       formats: isChunks ? ['es'] : ['es', 'umd'],

@@ -1,6 +1,6 @@
 {
   "name": "welyjs",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "type": "module",
   "description": "Lightweight Web Component framework powered by a single defineComponent() factory",
   "main": "./dist/wely.umd.js",
@@ -10,14 +10,28 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/wely.es.js",
-      "require": "./dist/wely.umd.js"
+      "require": "./dist/wely.umd.js",
+      "default": "./dist/wely.es.js"
     },
     "./playground/app": {
       "types": "./src/playground/app.ts",
       "import": "./src/playground/app.ts",
       "default": "./src/playground/app.ts"
     },
-    "./vitest-consumer": "./vitest.consumer.config.ts"
+    "./vitest-consumer": "./vitest.consumer.config.ts",
+    "./test": {
+      "types": "./src/testing/index.ts",
+      "import": "./src/testing/index.ts",
+      "default": "./src/testing/index.ts"
+    }
+  },
+  "peerDependencies": {
+    "vitest": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    }
   },
   "bin": {
     "wely": "./bin/wely.mjs"
@@ -26,10 +40,12 @@
     "dist",
     "bin",
     "index.html",
+    "src/build",
     "src/playground",
     "vite.library.config.ts",
     "vite.dev.config.ts",
-    "vitest.consumer.config.ts"
+    "vitest.consumer.config.ts",
+    "src/testing"
   ],
   "scripts": {
     "dev": "vite",
@@ -41,6 +57,7 @@
     "wely": "node bin/wely.mjs",
     "build:bundle": "WELY_BUILD_MODE=bundle vite build --emptyOutDir false",
     "build:chunks": "WELY_BUILD_MODE=chunks vite build --emptyOutDir false",
+    "build:all": "npm run build && npm run build:bundle && npm run build:chunks",
     "prepublishOnly": "npm run build",
     "test:e2e": "vitest run e2e",
     "test:browser": "npm run build && npm run build:bundle && playwright test",
@@ -70,7 +87,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "codemirror": "^6.0.2",
     "commander": "^14.0.3",
-    "lit": "^3.3.2",
+    "esbuild": "^0.25.10",
     "tailwindcss": "^4.2.1",
     "vite": "^7.3.1"
   },

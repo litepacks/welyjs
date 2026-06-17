@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi } from 'welyjs/test'
 import { createStore } from '../store'
 
 describe('createStore', () => {

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wely Todo Demo — Plain HTML</title>
+    <style>
+      :root {
+        --page-bg: #f1f5f9;
+        --page-fg: #0f172a;
+        --muted: #64748b;
+        --border: #e2e8f0;
+        --surface: #ffffff;
+        --accent: #2563eb;
+        --code-bg: #f8fafc;
+        --radius: 14px;
+        --space-xs: 0.5rem;
+        --space-sm: 0.75rem;
+        --space-md: 1.25rem;
+        --space-lg: 2rem;
+        --space-xl: 2.75rem;
+        --line: 1.65;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        font-size: 16px;
+        line-height: var(--line);
+        background: var(--page-bg);
+        color: var(--page-fg);
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .page {
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: var(--space-xl) var(--space-md) calc(var(--space-xl) + 1rem);
+      }
+
+      .page-header {
+        margin-bottom: var(--space-lg);
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin: 0 0 var(--space-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .page-title {
+        margin: 0 0 var(--space-sm);
+        font-size: clamp(1.75rem, 4vw, 2.125rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .page-lead {
+        margin: 0;
+        max-width: 38ch;
+        font-size: 1.0625rem;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: var(--space-md) var(--space-md) var(--space-lg);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      }
+
+      .card + .card {
+        margin-top: var(--space-lg);
+      }
+
+      .card-title {
+        margin: 0 0 var(--space-xs);
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .card-text {
+        margin: 0 0 var(--space-md);
+        font-size: 0.9375rem;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .card-text:last-child {
+        margin-bottom: 0;
+      }
+
+      .code-block {
+        margin: 0;
+        padding: var(--space-sm) var(--space-md);
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--code-bg);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.8125rem;
+        line-height: 1.55;
+        color: #334155;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .demo-section {
+        margin-top: var(--space-xl);
+      }
+
+      .demo-label {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin: 0 0 var(--space-md);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .demo-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      .demo-host {
+        padding: var(--space-md);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      }
+    </style>
+    <script src="../dist/wely.bundle.umd.js" defer></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <p class="eyebrow">Wely CLI demo</p>
+        <h1 class="page-title">Plain HTML usage</h1>
+        <p class="page-lead">
+          Drop the UMD bundle into any static page. Components load safely with
+          <code style="font-size:0.9em;background:#e2e8f0;padding:0.1em 0.35em;border-radius:4px">defer</code>
+          and <code style="font-size:0.9em;background:#e2e8f0;padding:0.1em 0.35em;border-radius:4px">wely.ready()</code>.
+        </p>
+      </header>
+
+      <section class="card" aria-labelledby="how-heading">
+        <h2 id="how-heading" class="card-title">How this page loads Wely</h2>
+        <p class="card-text">
+          Both scripts use <code>defer</code>, so the bundle runs first and the boot
+          snippet can call <code>wely.ready()</code> directly — no polling.
+        </p>
+        <pre class="code-block">&lt;script src="../dist/wely.bundle.umd.js" defer&gt;&lt;/script&gt;
+&lt;w-todo-demo title="..."&gt;&lt;/w-todo-demo&gt;
+&lt;script defer&gt;
+  wely.ready('w-todo-demo').catch(console.error);
+&lt;/script&gt;</pre>
+      </section>
+
+      <section class="demo-section" aria-labelledby="demo-heading">
+        <h2 id="demo-heading" class="demo-label">Live component</h2>
+        <div class="demo-host">
+          <w-todo-demo title="HTML Page Example"></w-todo-demo>
+        </div>
+      </section>
+    </main>
+
+    <script defer>
+      wely.ready('w-todo-demo').catch(console.error);
+    </script>
+  </body>
+</html>

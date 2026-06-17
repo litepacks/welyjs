@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New internal core runtime under `src/runtime/core` (`html`, `css`, `nothing`, renderer, and `WelyElement`) replacing Lit-backed rendering internals while keeping public API shape intact.
+- Core-focused test coverage: `src/runtime/core/__tests__/` for template creation, css helper, renderer behavior, and directive parts.
+- CLI improvements: `wely init --install`, `wely create --test`, generated test scaffold, and clearer missing-install error messages for `build`, `dev`, and `test`.
+- Build/test hardening in e2e: `build --chunks`, `build:all` verification, and gzip size regression guard.
+
+### Changed
+
+- Runtime internals moved from `LitElement` to `WelyElement`; `defineComponent` now renders through Wely core.
+- `src/runtime/index.ts` now exports `html`, `css`, and `nothing` from Wely core instead of re-exporting from `lit`.
+- Consumer alias resolution now prefers `node_modules/welyjs/src/runtime/index.ts` when available (linked/local installs), then falls back to `dist/wely.es.js`.
+- `wely build --all` now runs runtime, bundle, and chunk outputs.
+- Consumer test defaults now include aliasing for `welyjs/test` in `vitest.consumer.config.ts`.
+
+### Fixed
+
+- `wely page`: consumer projects without `vite.config` no longer run plain `vite build` (which required a root `index.html`). Uses the same `vite.library.config.ts` path as `wely build`. If `docs/index.html` is absent, scaffolds a minimal page once.
+- Consumer `vite.library.config.ts`: if `node_modules/welyjs/dist/wely.es.js` is missing (e.g. only bundle outputs in `dist/`), alias `welyjs` to `src/runtime/index.ts` so `wely build` / `wely page` still resolve.
+
+## [0.0.13] - 2025-03-26
+
+### Added
+
+- Subpath export `welyjs/test`: re-exports Vitest (`describe`, `it`, `expect`, `vi`, …) and adds `getComponentContext`, `appendComponent`, `withHost` for DOM integration tests. Optional peer dependency `vitest`.
+
 ## [0.0.12] - 2025-03-24
 
 ### Added
@@ -18,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - README and `docs/index.html`: testing workflow and `wely test` behavior.
+
+### Fixed
+
+- `wely page` no longer deletes `docs/` or replaces `docs/index.html` (previously it copied stale `page/` and wiped screenshots and the full doc). It only rebuilds the demo bundle into `docs/assets/wely.bundle.umd.js`. Removed duplicate `page/index.html`.
 
 ## [0.0.11] - 2025-03-24
 

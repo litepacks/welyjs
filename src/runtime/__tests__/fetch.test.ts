@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'welyjs/test'
 import { createClient, ApiError } from '../fetch'
 
 const mockFetch = vi.fn()

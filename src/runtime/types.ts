@@ -1,4 +1,4 @@
-import type { CSSResult, TemplateResult } from 'lit'
+import type { CSSResult, TemplateResult } from './core'
 import type { Fetcher, Resource, ResourceOptions } from './resource'
 import type { Store } from './store'
 
@@ -18,7 +18,7 @@ export type PropType = typeof Number | typeof String | typeof Boolean | typeof A
 export interface ComponentContext<
   P extends Record<string, unknown> = Record<string, unknown>,
   S extends Record<string, unknown> = Record<string, unknown>,
-  A extends Record<string, (ctx: ComponentContext<P, S, A>) => void> = Record<string, (ctx: ComponentContext<P, S>) => void>,
+  A extends Record<string, (ctx: ComponentContext<P, S, A>, event?: Event) => void> = Record<string, (ctx: ComponentContext<P, S>, event?: Event) => void>,
 > {
   /** Reference to the host HTMLElement (the custom element itself). */
   el: HTMLElement

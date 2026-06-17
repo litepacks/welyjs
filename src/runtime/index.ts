@@ -11,7 +11,8 @@ export { createStore } from './store'
 export type { Store, StoreDef } from './store'
 export { installBridge } from './bridge'
 export type { WelyBridge } from './bridge'
-export { html, css, nothing } from 'lit'
+export { ready, whenDomReady, whenTagsDefined, whenReady, loadScript } from './ready'
+export { html, css, nothing } from './core'
 
 import { installBridge } from './bridge'
 installBridge()

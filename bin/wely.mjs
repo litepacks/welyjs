@@ -2,9 +2,20 @@
 
 import { Command } from 'commander'
 import { execSync } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
+import {
+  buildAutoBundleSource,
+  getChangedTestPaths,
+  runAdd,
+  runCi,
+  runDoctor,
+  runDocsWatch,
+  runEmbed,
+  shouldAutoComponents,
+} from './wely-dx.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = process.cwd()
@@ -31,9 +42,10 @@ function getVitestDevDependencyRanges() {
     return {
       vitest: d.vitest ?? '^4.0.0',
       jsdom: d.jsdom ?? '^28.0.0',
+      esbuild: d.esbuild ?? '^0.25.0',
     }
   } catch {
-    return { vitest: '^4.0.0', jsdom: '^28.0.0' }
+    return { vitest: '^4.0.0', jsdom: '^28.0.0', esbuild: '^0.25.0' }
   }
 }
 
@@ -59,6 +71,71 @@ function getOutDirRel() {
   return relative(ROOT, getOutDir()).replace(/\\/g, '/') || '.'
 }
 
+function hasWelyjsRuntimeInstalled() {
+  const distEntry = join(ROOT, 'node_modules', 'welyjs', 'dist', 'wely.es.js')
+  const srcEntry = join(ROOT, 'node_modules', 'welyjs', 'src', 'runtime', 'index.ts')
+  return existsSync(distEntry) || existsSync(srcEntry)
+}
+
+/** True if the project has its own Vite config (CLI uses cwd = process.cwd()). */
+function hasProjectViteConfig() {
+  const names = ['vite.config.ts', 'vite.config.js', 'vite.config.mts', 'vite.config.mjs']
+  return names.some((f) => existsSync(join(ROOT, f)))
+}
+
+function getPackageDisplayName() {
+  try {
+    const p = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf-8'))
+    const n = p.name
+    if (n && typeof n === 'string') return String(n).replace(/^@[^/]+\//, '')
+  } catch {
+    /* ignore */
+  }
+  return 'My App'
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+/**
+ * If docs/index.html is missing, create a minimal GitHub Pages shell (does not overwrite).
+ * Returns true if the file was created.
+ */
+function ensureDocsLandingPage() {
+  const docsDir = join(ROOT, 'docs')
+  const indexHtml = join(docsDir, 'index.html')
+  if (existsSync(indexHtml)) return false
+  mkdirSync(docsDir, { recursive: true })
+  const rawTitle = getPackageDisplayName()
+  const title = escapeHtml(rawTitle)
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${title}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+    code { background: #f4f4f5; padding: 0.1em 0.35em; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>Single-page site for GitHub Pages. Edit <code>docs/index.html</code> as you like.</p>
+  <p>Run <code>wely page</code> from your project root to refresh <code>docs/assets/wely.bundle.umd.js</code>.</p>
+  <script src="./assets/wely.bundle.umd.js"></script>
+</body>
+</html>
+`
+  writeFileSync(indexHtml, html)
+  return true
+}
+
 function getComponentsImportPath() {
   const dir = getComponentsDir()
   const srcDir = join(ROOT, 'src')
@@ -70,6 +147,37 @@ function getComponentsDirRel() {
   return relative(ROOT, getComponentsDir()).replace(/\\/g, '/')
 }
 
+function createAutoBundleEntryFile() {
+  const componentsRel = getComponentsDirRel().replace(/^\/+/, '').replace(/\/+$/, '')
+  const tmpDir = mkdtempSync(join(tmpdir(), 'wely-auto-bundle-'))
+  const filePath = join(tmpDir, 'auto-bundle.ts')
+  writeFileSync(filePath, buildAutoBundleSource(componentsRel, getWelyConfig))
+  return filePath
+}
+
+function failWithFix(what, fix, cmd) {
+  console.error(`\n  ${what}\n`)
+  if (fix) console.error(`  How to fix: ${fix}\n`)
+  if (cmd) console.error(`  ${cmd}\n`)
+  process.exit(1)
+}
+
+const dxCtx = () => ({
+  root: ROOT,
+  getWelyConfig,
+  getComponentsDir,
+  getOutDir,
+  getOutDirRel,
+  hasWelyjsRuntimeInstalled,
+  hasProjectViteConfig,
+  hasProjectVitestOrViteConfig,
+  scanComponents,
+  runBuild: (o) => build(o),
+  buildFn: (o) => build(o),
+  testFn: (o) => testCmd(o),
+  docsFn: (o) => generateDocs(o),
+})
+
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
@@ -77,35 +185,68 @@ function getComponentsDirRel() {
 function build(opts = {}) {
   const isBundle = opts.bundle === true
   const isChunks = opts.chunks === true
-  const hasViteConfig = existsSync(join(ROOT, 'vite.config.ts')) || existsSync(join(ROOT, 'vite.config.js'))
+  const autoComponents = shouldAutoComponents(opts, getWelyConfig)
 
-  if (hasViteConfig) {
+  if (hasProjectViteConfig()) {
+    if (autoComponents) {
+      console.log('  --auto-components is ignored when project vite.config.* exists.\n')
+    }
     if (isChunks) {
       console.log('\n  Building (chunked — vendor, runtime, components split)...\n')
       run(getViteCmd('build --emptyOutDir false'), { env: { ...process.env, WELY_BUILD_MODE: 'chunks' } })
     } else if (isBundle) {
       console.log('\n  Building (bundle — runtime + components)...\n')
       run(getViteCmd('build'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
-    } else if (flags.all === true) {
-      console.log('\n  Building (all — library + bundle)...\n')
+    } else if (opts.all === true) {
+      console.log('\n  Building (all — library + bundle + chunks)...\n')
       run(getViteCmd('build'))
       run(getViteCmd('build --emptyOutDir false'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
+      run(getViteCmd('build --emptyOutDir false'), { env: { ...process.env, WELY_BUILD_MODE: 'chunks' } })
     } else {
       console.log('\n  Building...\n')
       run(getViteCmd('build'))
     }
   } else {
+    if (!hasWelyjsRuntimeInstalled()) {
+      failWithFix(
+        'welyjs runtime could not be resolved from node_modules.',
+        'Install dependencies in this project.',
+        'npm install && wely build',
+      )
+    }
     ensureConsumerFiles()
+    const autoBundleEntry = autoComponents ? createAutoBundleEntryFile() : undefined
     const buildEnv = {
       ...process.env,
       ...(isChunks && { WELY_BUILD_MODE: 'chunks' }),
+      ...(autoComponents && { WELY_BUNDLE_ENTRY: autoBundleEntry }),
       WELY_OUT_DIR: getOutDir(),
+      WELY_COMPONENTS_DIR: getComponentsDir(),
     }
-    console.log(isChunks ? '\n  Building chunked bundle (vendor, runtime, components split)...\n' : '\n  Building bundle (runtime + components)...\n')
+    console.log(
+      isChunks
+        ? '\n  Building chunked bundle (vendor, runtime, components split)...\n'
+        : autoComponents
+          ? '\n  Building bundle (runtime + auto-discovered components)...\n'
+          : '\n  Building bundle (runtime + components)...\n',
+    )
     run(getViteCmd(`build --config ${join(WELY_PKG, 'vite.library.config.ts')}`), { env: buildEnv })
   }
 
-  printDist()
+  if (opts.json) {
+    const outDir = getOutDir()
+    const files = existsSync(outDir)
+      ? readdirSync(outDir)
+          .filter((f) => statSync(join(outDir, f)).isFile())
+          .map((f) => {
+            const fp = join(outDir, f)
+            return { name: f, sizeKb: Number((statSync(fp).size / 1024).toFixed(1)) }
+          })
+      : []
+    console.log(JSON.stringify({ ok: true, outDir: getOutDirRel(), autoComponents, files }, null, 2))
+  } else {
+    printDist()
+  }
 
   if (opts.export) {
     copyTo(opts.export)
@@ -155,7 +296,7 @@ import '${componentsImport}'
   return created
 }
 
-function init() {
+function init(opts = {}) {
   const created = []
   const welyRange = getWelyjsDependencyRange()
 
@@ -181,8 +322,8 @@ export default defineConfig({
       type: 'module',
       scripts: { dev: 'wely dev', build: 'wely build', test: 'wely test' },
       dependencies: { welyjs: welyRange },
-      devDependencies: { vitest: vitestRanges.vitest, jsdom: vitestRanges.jsdom },
-      wely: { componentsDir: DEFAULT_COMPONENTS_DIR },
+      devDependencies: { vitest: vitestRanges.vitest, jsdom: vitestRanges.jsdom, esbuild: vitestRanges.esbuild },
+      wely: { componentsDir: DEFAULT_COMPONENTS_DIR, autoComponents: true },
     }
     writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
     created.push('package.json')
@@ -198,8 +339,10 @@ export default defineConfig({
       pkg.devDependencies = pkg.devDependencies ?? {}
       if (!pkg.devDependencies.vitest) pkg.devDependencies.vitest = vitestRanges.vitest
       if (!pkg.devDependencies.jsdom) pkg.devDependencies.jsdom = vitestRanges.jsdom
+      if (!pkg.devDependencies.esbuild) pkg.devDependencies.esbuild = vitestRanges.esbuild
       pkg.wely = pkg.wely ?? {}
       if (!pkg.wely.componentsDir) pkg.wely.componentsDir = DEFAULT_COMPONENTS_DIR
+      if (pkg.wely.autoComponents === undefined) pkg.wely.autoComponents = true
       writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
       created.push('package.json')
     } catch (e) {
@@ -213,7 +356,12 @@ export default defineConfig({
   if (created.length > 0) {
     console.log('\n  Created / updated:\n')
     for (const f of created) console.log(`    ${f}`)
-    console.log('\n  Run: npm install\n')
+    if (opts.install) {
+      console.log('\n  Installing dependencies...\n')
+      run('npm install', { stdio: 'inherit' })
+    } else {
+      console.log('\n  Run: npm install\n')
+    }
   } else {
     console.log('\n  Project already initialized.\n')
   }
@@ -247,48 +395,51 @@ function exportCmd(target, opts) {
 }
 
 function pageCmd() {
-  const pageDir = join(ROOT, 'page')
   const docsDir = join(ROOT, 'docs')
+  const indexHtml = join(docsDir, 'index.html')
   const distDir = getOutDir()
 
-  if (!existsSync(pageDir)) {
-    console.error('  page/ not found.\n')
+  if (ensureDocsLandingPage()) {
+    console.log('\n  Created docs/index.html (minimal landing page — safe to edit; not overwritten on later runs).\n')
+  }
+
+  if (!existsSync(indexHtml)) {
+    console.error('  docs/index.html could not be created.\n')
     process.exit(1)
   }
 
-  console.log('\n  Building bundle for demo...\n')
-  run(getViteCmd('build'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
+  console.log('\n  Building bundle for docs (cwd: project root)...\n')
+  if (hasProjectViteConfig()) {
+    run(getViteCmd('build'), { env: { ...process.env, WELY_BUILD_MODE: 'bundle' } })
+  } else {
+    ensureConsumerFiles()
+    const autoComponents = shouldAutoComponents({}, getWelyConfig)
+    const autoBundleEntry = autoComponents ? createAutoBundleEntryFile() : undefined
+    run(getViteCmd(`build --config ${join(WELY_PKG, 'vite.library.config.ts')}`), {
+      env: {
+        ...process.env,
+        WELY_OUT_DIR: getOutDir(),
+        WELY_COMPONENTS_DIR: getComponentsDir(),
+        ...(autoBundleEntry && { WELY_BUNDLE_ENTRY: autoBundleEntry }),
+      },
+    })
+  }
 
-  console.log('  Copying page/ → docs/ for GitHub Pages...\n')
-
-  if (existsSync(docsDir)) rmSync(docsDir, { recursive: true })
-  cpSync(pageDir, docsDir, { recursive: true })
+  const bundlePath = join(distDir, 'wely.bundle.umd.js')
+  if (!existsSync(bundlePath)) {
+    console.error(`  ${getOutDirRel()}/wely.bundle.umd.js not found after build.\n`)
+    process.exit(1)
+  }
 
   const assetsDir = join(docsDir, 'assets')
   if (!existsSync(assetsDir)) mkdirSync(assetsDir, { recursive: true })
-  const bundlePath = join(distDir, 'wely.bundle.umd.js')
-  if (existsSync(bundlePath)) {
-    cpSync(bundlePath, join(assetsDir, 'wely.bundle.umd.js'))
-  }
+  const destBundle = join(assetsDir, 'wely.bundle.umd.js')
+  cpSync(bundlePath, destBundle)
 
-  const files = readdirSync(docsDir)
-  for (const f of files) {
-    const fp = join(docsDir, f)
-    if (statSync(fp).isFile()) {
-      const kb = (statSync(fp).size / 1024).toFixed(1)
-      console.log(`    docs/${f}  (${kb} kB)`)
-    }
-  }
-  if (existsSync(assetsDir)) {
-    for (const f of readdirSync(assetsDir)) {
-      const fp = join(assetsDir, f)
-      if (statSync(fp).isFile()) {
-        const kb = (statSync(fp).size / 1024).toFixed(1)
-        console.log(`    docs/assets/${f}  (${kb} kB)`)
-      }
-    }
-  }
-  console.log('\n  Push docs/ and enable Pages (Settings → Pages → Source: /docs)\n')
+  const kb = (statSync(destBundle).size / 1024).toFixed(1)
+  console.log(`\n  Updated docs/assets/wely.bundle.umd.js (${kb} kB)`)
+  console.log('  docs/index.html left unchanged (single-page site).\n')
+  console.log('  Push docs/ and enable Pages (Settings → Pages → Source: /docs)\n')
 }
 
 function create(tag, opts) {
@@ -321,13 +472,19 @@ function create(tag, opts) {
   const relPath = join(getComponentsDirRel(), `${tag}.ts`)
   console.log(`\n  Created ${relPath}\n`)
 
+  if (opts.test) {
+    const testPath = join(componentsDir, `${tag}.test.ts`)
+    writeFileSync(testPath, generateComponentTest(tag))
+    console.log(`  Created ${join(getComponentsDirRel(), `${tag}.test.ts`)}\n`)
+  }
+
   syncIndex()
 }
 
 function sync() {
   ensureComponentsDir()
   const count = syncIndex()
-  console.log(`\n  Synced ${count} component(s) → src/components/index.ts\n`)
+  console.log(`\n  Synced ${count} component(s) → ${getComponentsDirRel()}/index.ts\n`)
 }
 
 function list() {
@@ -335,7 +492,7 @@ function list() {
   const tags = scanComponents()
 
   if (tags.length === 0) {
-    console.log('\n  No components found in src/components/\n')
+    console.log(`\n  No components found in ${getComponentsDirRel()}/\n`)
     return
   }
 
@@ -348,7 +505,7 @@ function list() {
   console.log()
 }
 
-function docs(opts) {
+function generateDocs(opts = {}) {
   ensureComponentsDir()
   const tags = scanComponents()
 
@@ -427,6 +584,14 @@ function docs(opts) {
   console.log(`\n  Generated docs for ${tags.length} component(s) → ${basename(outPath)}\n`)
 }
 
+function docs(opts = {}) {
+  if (opts.watch) {
+    runDocsWatch(dxCtx(), opts, generateDocs)
+    return
+  }
+  generateDocs(opts)
+}
+
 function parseComponentProps(src) {
   const propsMatch = src.match(/props:\s*\{([^}]*)\}/)
   if (!propsMatch) return []
@@ -439,10 +604,48 @@ function parseComponentActions(src) {
   return [...actionsMatch[1].matchAll(/(\w+)\s*\(ctx\)/g)].map(m => m[1])
 }
 
+function setupCmd(opts = {}) {
+  init({ install: opts.install !== false && !opts.noInstall })
+  ensureComponentsDir()
+  if (scanComponents().length === 0) {
+    create('w-demo', { props: 'title:String', test: true })
+  }
+  if (opts.build !== false) {
+    build({ autoComponents: shouldAutoComponents(opts, getWelyConfig) })
+  }
+  console.log('\n  Setup complete! Next steps:\n')
+  console.log('    npm run dev     # playground')
+  console.log('    npm run build   # production bundle')
+  console.log('    npm run test    # component tests\n')
+}
+
+function doctorCmd(opts = {}) {
+  runDoctor(dxCtx(), opts)
+}
+
+function embedCmd(opts = {}) {
+  runEmbed(dxCtx(), opts)
+}
+
+function addCmd(target) {
+  runAdd(target, dxCtx())
+}
+
+function ciCmd(opts = {}) {
+  runCi(dxCtx(), opts)
+}
+
 function dev() {
-  const hasViteConfig = existsSync(join(ROOT, 'vite.config.ts')) || existsSync(join(ROOT, 'vite.config.js'))
-  if (!hasViteConfig) {
+  if (!hasProjectViteConfig()) {
+    if (!hasWelyjsRuntimeInstalled()) {
+      failWithFix(
+        'welyjs runtime could not be resolved from node_modules.',
+        'Install dependencies in this project.',
+        'npm install && wely dev',
+      )
+    }
     ensureConsumerFiles()
+    const autoComponents = shouldAutoComponents({}, getWelyConfig)
     console.log('\n  Starting dev server...\n')
     run(getViteCmd(`--config ${join(WELY_PKG, 'vite.dev.config.ts')}`), {
       stdio: 'inherit',
@@ -450,6 +653,7 @@ function dev() {
         ...process.env,
         WELY_COMPONENTS_DIR: getComponentsDir(),
         WELY_CONFIG_PATH: join(ROOT, 'wely.config.ts'),
+        WELY_AUTO_COMPONENTS: autoComponents ? '1' : '0',
       },
     })
   } else {
@@ -473,11 +677,30 @@ function hasProjectVitestOrViteConfig() {
   return names.some((f) => existsSync(join(ROOT, f)))
 }
 
-function testCmd(opts) {
-  const isWatch = !opts.run
+function testCmd(opts = {}) {
+  if (!hasWelyjsRuntimeInstalled()) {
+    failWithFix(
+      'welyjs runtime could not be resolved from node_modules.',
+      'Install dependencies in this project.',
+      'npm install && wely test',
+    )
+  }
+  const isWatch = !opts.run && !opts.changed
   const useConsumerDefaults = !hasProjectVitestOrViteConfig()
   const configArg = useConsumerDefaults ? ` --config ${join(WELY_PKG, 'vitest.consumer.config.ts')}` : ''
-  const cmd = isWatch ? `npx vitest${configArg}` : `npx vitest run${configArg}`
+
+  let fileArgs = ''
+  if (opts.changed) {
+    const paths = getChangedTestPaths(ROOT, scanComponents)
+    if (paths.length === 0) {
+      console.log('\n  No changed component tests found — running full suite.\n')
+    } else {
+      console.log(`\n  Running ${paths.length} changed test file(s)...\n`)
+      fileArgs = ' ' + paths.map((p) => JSON.stringify(p)).join(' ')
+    }
+  }
+
+  const cmd = isWatch ? `npx vitest${configArg}${fileArgs}` : `npx vitest run${configArg}${fileArgs}`
   run(cmd, { stdio: 'inherit' })
 }
 
@@ -582,6 +805,20 @@ function generateComponent(tag, propsInput, actionsInput) {
   lines.push(``)
 
   return lines.join('\n')
+}
+
+function generateComponentTest(tag) {
+  return `import { describe, it, expect, withHost } from 'welyjs/test'
+import './${tag}'
+
+describe('${tag}', () => {
+  it('renders', async () => {
+    await withHost('${tag}', undefined, (host) => {
+      expect(host.shadowRoot).toBeTruthy()
+    })
+  })
+})
+`
 }
 
 // ---------------------------------------------------------------------------
@@ -699,16 +936,20 @@ program
     'after',
     `
 Config (package.json → "wely"):
-  componentsDir    Component files directory (default: src/wely-components)
-  outDir           Build output directory (default: dist)
+  componentsDir       Component files directory (default: src/wely-components)
+  outDir              Build output directory (default: dist)
+  autoComponents      Auto-discover components on build/dev (default: true after init)
+  componentExclude    Extra glob patterns to skip (e.g. "**/*.stories.ts")
 
 Examples:
-  $ wely init
+  $ wely setup
+  $ wely doctor
   $ wely create w-card
-  $ wely create w-user-list --props name:String,age:Number --actions refresh
-  $ wely sync && wely list
   $ wely build
-  $ wely export ../my-app/public/vendor/wely
+  $ wely embed
+  $ wely add react
+  $ wely test --changed
+  $ wely ci
 `,
   )
 
@@ -719,6 +960,7 @@ program
   .description(
     'Scaffold wely.config.ts, package.json (wely dev / wely build / wely test, vitest+jsdom devDeps, ^welyjs from this CLI), src/bundle.ts, and components index',
   )
+  .option('--install', 'run npm install after scaffolding')
   .action(init)
 
 program
@@ -726,6 +968,7 @@ program
   .description('Scaffold a new component')
   .option('--props <spec>', 'key:Type pairs, comma-separated (e.g. title:String,count:Number)')
   .option('--actions <names>', 'action names, comma-separated (e.g. toggle,reset)')
+  .option('--test', 'also scaffold a <tag>.test.ts file')
   .option('--force', 'overwrite existing file')
   .action(create)
 
@@ -734,23 +977,60 @@ program.command('sync').description('Regenerate components index from existing f
 program.command('list').description('List registered components').action(list)
 
 program
+  .command('doctor')
+  .description('Diagnose project setup and suggest fixes')
+  .option('--json', 'machine-readable output')
+  .action(doctorCmd)
+
+program
+  .command('setup')
+  .description('One-shot scaffold: init, sample component, optional build')
+  .option('--no-build', 'skip initial build')
+  .option('--no-install', 'skip npm install during init')
+  .action(setupCmd)
+
+program
   .command('docs')
   .description('Generate COMPONENTS.md from component source files')
   .option('--out <path>', 'write to a custom path instead of COMPONENTS.md')
+  .option('--watch', 'regenerate docs when components change')
   .action(docs)
+
+program
+  .command('embed')
+  .description('Generate plain HTML usage scaffold (html-usage/index.html)')
+  .option('--out <dir>', 'output directory (default: html-usage)')
+  .option('--title <text>', 'page title')
+  .action(embedCmd)
+
+program
+  .command('add <target>')
+  .description('Scaffold framework integration snippet (react, vue)')
+  .action(addCmd)
+
+program
+  .command('ci')
+  .description('Run build + test + docs verification pipeline')
+  .option('--json', 'machine-readable output')
+  .action(ciCmd)
 
 program
   .command('build')
   .description('Build the library (runtime only by default when using vite.config.ts)')
   .option('--bundle', 'include components in output (runtime + components)')
   .option('--chunks', 'split into vendor, runtime, and components chunks')
-  .option('--all', 'build both library and bundle')
+  .option('--auto-components', 'auto-discover components from componentsDir instead of src/bundle.ts import chain')
+  .option('--no-auto-components', 'disable auto-discovery even when wely.autoComponents is true')
+  .option('--all', 'build runtime, bundle, and chunks')
   .option('--export <path>', 'copy build output to destination after build')
+  .option('--json', 'machine-readable build summary')
   .action(build)
 
 program
   .command('page')
-  .description('Build static demo page for GitHub Pages into docs/')
+  .description(
+    'Build demo bundle and copy to docs/assets/wely.bundle.umd.js (keeps docs/index.html — GitHub Pages single-page doc)',
+  )
   .action(pageCmd)
 
 program
@@ -766,6 +1046,7 @@ program
   .command('test')
   .description('Run Vitest (watch mode by default)')
   .option('--run', 'single run, no watch')
+  .option('--changed', 'run tests related to git-changed files only')
   .action(testCmd)
 
 if (process.argv.length <= 2) {
