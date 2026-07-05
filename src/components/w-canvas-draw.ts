@@ -35,7 +35,8 @@ defineComponent({
   },
 
   actions: {
-    startDrawing(ctx, event: Event) {
+    startDrawing(ctx, event?: Event) {
+      if (!event) return
       event.preventDefault()
       const canvas = ctx.el.shadowRoot?.querySelector('canvas')
       if (!canvas) return
@@ -62,10 +63,11 @@ defineComponent({
       ctx.state.lastY = clientY - rect.top
 
       ctx2d.beginPath()
-      ctx2d.moveTo(ctx.state.lastX, ctx.state.lastY)
+      ctx2d.moveTo(ctx.state.lastX as number, ctx.state.lastY as number)
     },
 
-    draw(ctx, event: Event) {
+    draw(ctx, event?: Event) {
+      if (!event) return
       if (!ctx.state.isDrawing) return
       event.preventDefault()
 
@@ -90,8 +92,8 @@ defineComponent({
       const x = clientX - rect.left
       const y = clientY - rect.top
 
-      ctx2d.strokeStyle = ctx.state.color
-      ctx2d.lineWidth = ctx.state.lineWidth
+      ctx2d.strokeStyle = ctx.state.color as string
+      ctx2d.lineWidth = ctx.state.lineWidth as number
       ctx2d.lineCap = 'round'
       ctx2d.lineJoin = 'round'
 
@@ -116,7 +118,8 @@ defineComponent({
       ctx.state.hasDrawing = false
     },
 
-    changeColor(ctx, event: Event) {
+    changeColor(ctx, event?: Event) {
+      if (!event) return
       const btn = event.currentTarget as HTMLButtonElement
       const color = btn.dataset.color
       if (color) {
@@ -124,7 +127,8 @@ defineComponent({
       }
     },
 
-    changeWidth(ctx, event: Event) {
+    changeWidth(ctx, event?: Event) {
+      if (!event) return
       const input = event.target as HTMLInputElement
       ctx.state.lineWidth = Number(input.value)
     },

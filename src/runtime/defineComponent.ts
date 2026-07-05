@@ -6,7 +6,7 @@ import { createResource } from './resource'
 import type { Fetcher, Resource, ResourceOptions } from './resource'
 import { getTailwindSheet } from './shared-styles'
 import type { Store } from './store'
-import type { ComponentContext, ComponentDef, PropType } from './types'
+import type { ComponentContext, ComponentDef, PropType, PropDef } from './types'
 
 export type { ComponentContext, ComponentDef } from './types'
 
@@ -29,8 +29,9 @@ function parsePropValue(host: HTMLElement, key: string, ctor: PropType): unknown
   return attr == null ? undefined : attr
 }
 
-function toObservedAttribute(ctor: PropType) {
-  switch (ctor) {
+function toObservedAttribute(ctor: PropDef) {
+  const actualCtor = typeof ctor === 'function' ? ctor : ctor.type
+  switch (actualCtor) {
     case Number:
       return { type: Number, reflect: true }
     case Boolean:
@@ -97,9 +98,14 @@ export function defineComponent<
 
       const propsProxy = new Proxy({} as P, {
         get(_target, key: string) {
-          const ctor = propsDef[key]
-          if (!ctor) return undefined
-          return parsePropValue(host, key, ctor)
+          const propDef = propsDef[key]
+          if (!propDef) return undefined
+          const ctor = typeof propDef === 'function' ? propDef : propDef.type
+          const val = parsePropValue(host, key, ctor)
+          if (val === undefined && typeof propDef === 'object' && propDef && 'default' in propDef) {
+            return propDef.default
+          }
+          return val
         },
       })
 
@@ -155,6 +161,7 @@ export function defineComponent<
 
       if (!this._setupDone) {
         this._adoptTailwind()
+        this._applyDefaults()
         this._ctx = this._buildCtx()
         if (def.setup) def.setup(this._ctx)
         this._setupDone = true
@@ -163,6 +170,21 @@ export function defineComponent<
       }
 
       if (def.connected) def.connected(this._ctx)
+    }
+
+    private _applyDefaults(): void {
+      for (const [key, propDef] of Object.entries(propsDef)) {
+        if (typeof propDef === 'object' && propDef && 'default' in propDef) {
+          if (!this.hasAttribute(key)) {
+            const val = propDef.default
+            if (val === true) {
+              this.setAttribute(key, '')
+            } else if (val !== false && val != null) {
+              this.setAttribute(key, typeof val === 'object' ? JSON.stringify(val) : String(val))
+            }
+          }
+        }
+      }
     }
 
     override attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {

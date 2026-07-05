@@ -54,4 +54,19 @@ describe('config', () => {
     expect(cfg.a).toBeUndefined()
     expect(cfg.b).toBe(2)
   })
+
+  it('warns when defineConfig is called after configuration is sealed', () => {
+    defineConfig({ a: 1 })
+    getConfig() // seals the config
+    
+    const originalWarn = console.warn
+    let warnCalled = false
+    console.warn = () => { warnCalled = true }
+    try {
+      defineConfig({ b: 2 })
+      expect(warnCalled).toBe(true)
+    } finally {
+      console.warn = originalWarn
+    }
+  })
 })

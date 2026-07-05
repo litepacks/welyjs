@@ -1,4 +1,12 @@
-import { describe, it, expect, vi } from 'welyjs/test'
+import { vi } from 'vitest'
+
+vi.mock('virtual:wely-tailwind.css?inline', () => {
+  return {
+    default: 'body { color: red; }'
+  }
+})
+
+import { describe, it, expect } from 'welyjs/test'
 import { html, css } from '../index'
 import { defineComponent } from '../defineComponent'
 import { getComponent } from '../registry'
@@ -353,4 +361,167 @@ describe('defineComponent', () => {
     el.remove()
   })
 
+  it('initializes context inside renderTemplate if connectedCallback has not run', () => {
+    let setupCtx: any
+    defineComponent({
+      tag: 'w-test-disconnected',
+      props: {
+        title: { type: String, default: 'disconnected-default' }
+      },
+      setup(ctx) {
+        setupCtx = ctx
+        ctx.state.value = 'inited'
+      },
+      state: () => ({ value: '' }),
+      render: (ctx) => html`<span>${ctx.state.value}</span>`
+    })
+
+    const el = document.createElement('w-test-disconnected')
+    // Manually trigger performUpdate while not attached to DOM
+    ;(el as any).performUpdate()
+    expect((el as any)._setupDone).toBe(true)
+    expect(el.shadowRoot?.textContent).toBe('inited')
+    expect(setupCtx.props.title).toBe('disconnected-default')
+  })
+
+  it('applies an array of component styles', async () => {
+    defineComponent({
+      tag: 'w-test-styles-array',
+      styles: [css`:host{display:block;}`, css`span{color:red;}`],
+      render: () => html`<span>ok</span>`,
+    })
+
+    const el = document.createElement('w-test-styles-array')
+    document.body.appendChild(el)
+    await wait(50)
+
+    const styleTag = el.shadowRoot?.querySelector('style')
+    const adopted = el.shadowRoot?.adoptedStyleSheets ?? []
+    expect(Boolean(styleTag) || adopted.length > 0).toBe(true)
+
+    el.remove()
+  })
+
+  it('handles adoptedStyleSheets assignment error gracefully in _adoptTailwind', async () => {
+    const { getTailwindSheet } = await import('../shared-styles')
+    const twSheet = getTailwindSheet() ?? new CSSStyleSheet()
+    
+    defineComponent({
+      tag: 'w-test-adopt-fail',
+      render: () => html`<span>ok</span>`
+    })
+    
+    const el = document.createElement('w-test-adopt-fail')
+    Object.defineProperty(el.shadowRoot, 'adoptedStyleSheets', {
+      get() { return [] },
+      set() { throw new Error('stub error') },
+      configurable: true
+    })
+    
+    document.body.appendChild(el)
+    await wait(10)
+    el.remove()
+  })
+
+  it('binds actions in component setup context', async () => {
+    let actionTriggered = false
+    defineComponent({
+      tag: 'w-test-setup-actions',
+      actions: {
+        clickAction() {
+          actionTriggered = true
+        }
+      },
+      render: (ctx) => html`<button id="btn" @click=${ctx.actions.clickAction}>click</button>`
+    })
+
+    const el = document.createElement('w-test-setup-actions')
+    document.body.appendChild(el)
+    await wait(20)
+
+    const button = el.shadowRoot?.querySelector('#btn') as HTMLButtonElement
+    button.click()
+    expect(actionTriggered).toBe(true)
+
+    el.remove()
+  })
+
+  it('applies default property configurations', async () => {
+    defineComponent({
+      tag: 'w-test-prop-defaults',
+      props: {
+        active: { type: Boolean, default: true },
+        title: { type: String, default: 'wely' },
+        info: { type: Object, default: { id: 1 } }
+      },
+      render: () => html`<span>ok</span>`
+    })
+
+    const el = document.createElement('w-test-prop-defaults')
+    document.body.appendChild(el)
+    await wait(20)
+
+    expect(el.hasAttribute('active')).toBe(true)
+    expect(el.getAttribute('title')).toBe('wely')
+    expect(el.getAttribute('info')).toBe('{"id":1}')
+
+    el.remove()
+  })
+
+  it('supports context helpers like update, resource, use and default props proxy access', async () => {
+    const { createStore } = await import('../store')
+    let setupCtx: any
+    const testStore = createStore({ state: () => ({ value: 1 }) })
+
+    defineComponent({
+      tag: 'w-test-ctx-helpers',
+      props: {
+        title: { type: String, default: 'default-wely' }
+      },
+      setup(ctx) {
+        setupCtx = ctx
+        ctx.use(testStore)
+        ctx.resource(async () => 'ok')
+      },
+      render: () => html`<span>ok</span>`
+    })
+
+    const el = document.createElement('w-test-ctx-helpers')
+    document.body.appendChild(el)
+    await wait(20)
+
+    expect(setupCtx.props.title).toBe('default-wely')
+    setupCtx.update()
+
+    el.remove()
+  })
+
+  it('parses Object and Array properties from attributes', async () => {
+    let setupCtx: any
+    defineComponent({
+      tag: 'w-test-prop-parsing',
+      props: {
+        list: Array,
+        data: Object,
+      },
+      setup(ctx) {
+        setupCtx = ctx
+      },
+      render: () => html`<span>ok</span>`
+    })
+
+    const el = document.createElement('w-test-prop-parsing')
+    el.setAttribute('list', '[1, 2, 3]')
+    el.setAttribute('data', '{"val": 100}')
+    document.body.appendChild(el)
+    await wait(20)
+
+    expect(setupCtx.props.list).toEqual([1, 2, 3])
+    expect(setupCtx.props.data).toEqual({ val: 100 })
+
+    el.setAttribute('data', 'invalid-json')
+    expect(setupCtx.props.data).toBeUndefined()
+
+    el.remove()
+  })
 })

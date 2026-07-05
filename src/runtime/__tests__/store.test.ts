@@ -135,4 +135,19 @@ describe('createStore', () => {
     expect(store.state.value).toBe('hello')
     expect(store.actions).toEqual({})
   })
+
+  it('action with no mutations does not trigger notification', () => {
+    const store = createStore({
+      state: () => ({ count: 0 }),
+      actions: {
+        noop() {}
+      }
+    })
+    const spy = vi.fn()
+    store.subscribe(spy)
+
+    store.actions.noop()
+
+    expect(spy).not.toHaveBeenCalled()
+  })
 })

@@ -28,4 +28,22 @@ describe('registry', () => {
     expect(all).toBeInstanceOf(Map)
     expect(all.has('w-reg-test-2')).toBe(true)
   })
+
+  it('registering duplicate component warns and returns early', () => {
+    const def1 = makeDef('w-reg-dup')
+    const def2 = makeDef('w-reg-dup')
+    registerComponent('w-reg-dup', def1)
+
+    // Stub console.warn
+    const originalWarn = console.warn
+    let warnCalled = false
+    console.warn = () => { warnCalled = true }
+    try {
+      registerComponent('w-reg-dup', def2)
+      expect(warnCalled).toBe(true)
+      expect(getComponent('w-reg-dup')).toBe(def1)
+    } finally {
+      console.warn = originalWarn
+    }
+  })
 })

@@ -125,4 +125,27 @@ describe('createResource', () => {
 
     expect(spy).not.toHaveBeenCalled()
   })
+
+  it('sets error from non-Error exception', async () => {
+    const res = createResource(async () => {
+      throw 'string boom'
+    })
+
+    await res.fetch()
+
+    expect(res.data).toBeUndefined()
+    expect(res.loading).toBe(false)
+    expect(res.error).toBeInstanceOf(Error)
+    expect(res.error?.message).toBe('string boom')
+  })
+
+  it('abort is a no-op when not loading', () => {
+    const res = createResource(async () => 'x')
+    const spy = vi.fn()
+    res.subscribe(spy)
+
+    res.abort()
+    expect(res.loading).toBe(false)
+    expect(spy).not.toHaveBeenCalled()
+  })
 })

@@ -35,9 +35,9 @@ export class WelyElement extends HTMLElement {
 
   protected performUpdate(): void {
     if (!this.shadowRoot) return
-    this.ensureStyles()
     const tpl = this.renderTemplate()
     commit(this.shadowRoot, tpl)
+    this.ensureStyles()
   }
 
   protected renderTemplate(): TemplateResult {
@@ -45,13 +45,14 @@ export class WelyElement extends HTMLElement {
   }
 
   private ensureStyles(): void {
-    if (this._stylesApplied || !this.shadowRoot) return
-    this._stylesApplied = true
+    if (!this.shadowRoot) return
     const ctor = this.constructor as typeof WelyElement
     const styles = ctor.styles ?? []
     if (styles.length === 0) return
 
     try {
+      if (this._stylesApplied) return
+      this._stylesApplied = true
       const existing = this.shadowRoot.adoptedStyleSheets ?? []
       const next = [...existing]
       for (const style of styles) {
@@ -61,7 +62,9 @@ export class WelyElement extends HTMLElement {
       }
       this.shadowRoot.adoptedStyleSheets = next
     } catch {
+      if (this.shadowRoot.querySelector('style[data-wely-style]')) return
       const styleTag = document.createElement('style')
+      styleTag.setAttribute('data-wely-style', '')
       styleTag.textContent = styles.map((s) => s.cssText).join('\n')
       this.shadowRoot.prepend(styleTag)
     }

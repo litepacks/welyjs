@@ -1,18 +1,18 @@
 import { defineComponent, html } from '../runtime'
 
 const variantClasses: Record<string, string> = {
-  default: 'bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-800',
+  default: 'bg-[var(--wp-surface2)] hover:bg-[var(--wp-border)] active:opacity-85 text-[var(--wp-fg)]',
   primary: 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white',
   danger: 'bg-red-600 hover:bg-red-700 active:bg-red-800 text-white',
-  ghost: 'bg-transparent hover:bg-zinc-100 active:bg-zinc-200 text-zinc-700',
+  ghost: 'bg-transparent hover:bg-[var(--wp-surface2)] active:opacity-85 text-[var(--wp-muted)]',
 }
 
 defineComponent({
   tag: 'w-button',
 
   props: {
-    label: String,
-    variant: String,
+    label: { type: String, default: 'Click me' },
+    variant: { type: String, default: 'default' },
     disabled: Boolean,
   },
 

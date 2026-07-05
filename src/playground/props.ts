@@ -2,14 +2,18 @@ import type { ComponentDef } from 'welyjs'
 import { SVG } from './svg'
 
 export function typeName(ctor: unknown): string {
-  if (ctor === Number) return 'Number'
-  if (ctor === Boolean) return 'Boolean'
-  if (ctor === Array) return 'Array'
-  if (ctor === Object) return 'Object'
+  const actual = typeof ctor === 'object' && ctor !== null && 'type' in ctor ? (ctor as any).type : ctor;
+  if (actual === Number) return 'Number'
+  if (actual === Boolean) return 'Boolean'
+  if (actual === Array) return 'Array'
+  if (actual === Object) return 'Object'
   return 'String'
 }
 
-export function createPropInput(name: string, ctor: unknown, el: HTMLElement): HTMLElement {
+export function createPropInput(name: string, propDef: unknown, el: HTMLElement): HTMLElement {
+  const ctor = typeof propDef === 'function' ? propDef : (propDef as any).type;
+  const defaultValue = typeof propDef === 'object' && propDef && 'default' in propDef ? (propDef as any).default : undefined;
+
   const row = document.createElement('label')
   row.className = 'wp-prop-row'
 
@@ -28,7 +32,8 @@ export function createPropInput(name: string, ctor: unknown, el: HTMLElement): H
     const input = document.createElement('input')
     input.type = 'checkbox'
     input.className = 'wp-checkbox'
-    input.checked = el.hasAttribute(name)
+    const hasAttr = el.hasAttribute(name)
+    input.checked = hasAttr ? true : (defaultValue === true)
     input.addEventListener('change', () => {
       if (input.checked) el.setAttribute(name, '')
       else el.removeAttribute(name)
@@ -38,7 +43,8 @@ export function createPropInput(name: string, ctor: unknown, el: HTMLElement): H
     const input = document.createElement('input')
     input.type = ctor === Number ? 'number' : 'text'
     input.className = 'wp-input' + (ctor === Array || ctor === Object ? ' wp-mono' : '')
-    input.value = el.getAttribute(name) ?? ''
+    const attrVal = el.getAttribute(name)
+    input.value = attrVal !== null ? attrVal : (defaultValue !== undefined ? String(defaultValue) : '')
     input.placeholder = ctor === Number ? '0' : ctor === Array ? '[]' : ctor === Object ? '{}' : 'value'
     input.addEventListener('input', () => el.setAttribute(name, input.value))
     row.appendChild(input)
@@ -112,6 +118,20 @@ export function createPropsPanelForElement(el: HTMLElement, def: ComponentDef): 
   const props = def.props ?? {}
   const entries = Object.entries(props)
   if (entries.length === 0) return null
+
+  // Pre-populate default attributes on el
+  for (const [k, c] of entries) {
+    if (typeof c === 'object' && c && 'default' in c) {
+      if (!el.hasAttribute(k)) {
+        const val = (c as any).default
+        if (val === true) el.setAttribute(k, '')
+        else if (val !== false && val != null) {
+          el.setAttribute(k, typeof val === 'object' ? JSON.stringify(val) : String(val))
+        }
+      }
+    }
+  }
+
   const panel = document.createElement('div')
   panel.className = 'wp-props-panel'
   const title = document.createElement('div')

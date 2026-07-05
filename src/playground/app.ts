@@ -28,7 +28,7 @@ export function mountApp() {
 
   const brand = document.createElement('div')
   brand.className = 'wp-brand'
-  brand.innerHTML = '<h1>Wely <span>playground</span></h1>'
+  brand.innerHTML = '<h1><a href="#/home" class="wp-brand-link">Wely <span>playground</span></a></h1>'
 
   const nav = document.createElement('nav')
   nav.className = 'wp-nav'
@@ -36,26 +36,12 @@ export function mountApp() {
   const headerActions = document.createElement('div')
   headerActions.className = 'wp-header-actions'
 
-  const menuBtn = document.createElement('button')
-  menuBtn.type = 'button'
-  menuBtn.className = 'wp-btn wp-menu-btn'
-  menuBtn.innerHTML = SVG.menu
-  menuBtn.setAttribute('aria-label', 'Toggle menu')
-  menuBtn.addEventListener('click', () => {
-    nav.classList.toggle('wp-nav-open')
-    menuBtn.innerHTML = nav.classList.contains('wp-nav-open') ? SVG.close : SVG.menu
-  })
-
   const navLinks: { route: Route; el: HTMLAnchorElement }[] = []
   for (const { route, label, hash } of NAV) {
     const a = document.createElement('a')
     a.className = 'wp-nav-link'
     a.href = hash
     a.textContent = label
-    a.addEventListener('click', () => {
-      nav.classList.remove('wp-nav-open')
-      menuBtn.innerHTML = SVG.menu
-    })
     nav.appendChild(a)
     navLinks.push({ route, el: a })
   }
@@ -71,7 +57,6 @@ export function mountApp() {
   })
 
   headerActions.appendChild(themeBtn)
-  headerActions.appendChild(menuBtn)
 
   headerRow.appendChild(brand)
   headerRow.appendChild(nav)

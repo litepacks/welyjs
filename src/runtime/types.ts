@@ -5,6 +5,9 @@ import type { Store } from './store'
 /** Supported property constructor types for attribute ↔ property sync. */
 export type PropType = typeof Number | typeof String | typeof Boolean | typeof Array | typeof Object
 
+export type PropDef = PropType | { type: PropType; default?: any }
+
+
 /**
  * Context object passed to every lifecycle and render function.
  *
@@ -93,7 +96,7 @@ export interface ComponentDef<
   /** Custom element tag name. Must contain a hyphen (e.g. `w-button`). */
   tag: string
   /** Attribute-synced properties. Keys become HTML attributes. */
-  props?: Record<string, PropType>
+  props?: Record<string, PropDef>
   /** Component-scoped styles via Lit's `css` helper. */
   styles?: CSSResult | CSSResult[]
   /** Factory that returns the initial reactive state object. */

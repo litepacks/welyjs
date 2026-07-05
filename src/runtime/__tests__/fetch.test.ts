@@ -180,4 +180,46 @@ describe('createClient', () => {
       expect((e as ApiError).statusText).toBe('NetworkError')
     }
   })
+
+  it('supports FormData bodies without JSON content type encoding', async () => {
+    class MockFormData {}
+    vi.stubGlobal('FormData', MockFormData)
+    mockFetch.mockReturnValueOnce(jsonResponse({ ok: true }))
+
+    const api = createClient({ baseURL: 'https://api.test.com' })
+    const fd = new MockFormData()
+    await api.post('/upload', fd)
+
+    const [, init] = mockFetch.mock.calls[0]
+    expect(init.body).toBe(fd)
+    expect(init.headers?.['Content-Type']).toBeUndefined()
+
+    vi.unstubAllGlobals()
+  })
+
+  it('binds custom AbortSignal to fetch request', async () => {
+    mockFetch.mockReturnValueOnce(jsonResponse({}))
+    const api = createClient({ baseURL: 'https://api.test.com' })
+    const controller = new AbortController()
+
+    await api.get('/test', { signal: controller.signal })
+
+    const [, init] = mockFetch.mock.calls[0]
+    expect(init.signal).toBe(controller.signal)
+  })
+
+  it('aborts request and throws timeout error on expiry', async () => {
+    mockFetch.mockImplementationOnce((_url, init) => {
+      return new Promise((_, reject) => {
+        if (init?.signal) {
+          init.signal.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'))
+          })
+        }
+      })
+    })
+    const api = createClient({ baseURL: 'https://api.test.com', timeout: 10 })
+
+    await expect(api.get('/hang')).rejects.toThrow(/Request timeout after 10ms/)
+  })
 })
