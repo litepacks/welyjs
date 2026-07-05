@@ -12,7 +12,7 @@ const runDts = !isBundle && !isChunks
 
 export default defineConfig(({ command }) => {
   const includeComponentTailwind =
-    isBundle || isChunks || (command !== 'build' && process.env.VITEST === 'true')
+    isBundle || isChunks || command !== 'build'
 
   return {
     resolve: {

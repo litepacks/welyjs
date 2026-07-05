@@ -42,15 +42,15 @@ defineComponent({
   render(ctx) {
     const title = (ctx.props.title as string) ?? 'Counter'
     return html`
-      <div class="border border-zinc-200 rounded-lg p-4 bg-white space-y-3">
-        <h3 class="text-sm font-semibold text-zinc-700">${title}</h3>
+      <div class="border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 bg-white dark:bg-zinc-900 space-y-3">
+        <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">${title}</h3>
         <w-counter start=${ctx.props.start ?? 0}></w-counter>
         <div class="flex gap-2">
           <w-button label="Action" variant="primary" @w-click=${ctx.actions.onCounterClick}></w-button>
           <w-button label="Ghost" variant="ghost" @w-click=${ctx.actions.onCounterClick}></w-button>
         </div>
         ${ctx.state.lastEvent
-          ? html`<p class="text-xs text-zinc-400">${ctx.state.lastEvent}</p>`
+          ? html`<p class="text-xs text-zinc-400 dark:text-zinc-500">${ctx.state.lastEvent}</p>`
           : ''}
       </div>
     `

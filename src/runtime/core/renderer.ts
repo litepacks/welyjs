@@ -103,16 +103,24 @@ function compileTemplate(strings: readonly string[]): HTMLTemplateElement {
       if (exact) {
         const index = Number(exact[1])
         if (attr.name.startsWith('@')) {
-          el.setAttribute('data-wely-event', `${index}:${attr.name.slice(1)}`)
+          const list = JSON.parse(el.getAttribute('data-wely-event') ?? '[]')
+          list.push({ index, name: attr.name.slice(1) })
+          el.setAttribute('data-wely-event', JSON.stringify(list))
           el.removeAttribute(attr.name)
         } else if (attr.name.startsWith('?')) {
-          el.setAttribute('data-wely-bool', `${index}:${attr.name.slice(1)}`)
+          const list = JSON.parse(el.getAttribute('data-wely-bool') ?? '[]')
+          list.push({ index, name: attr.name.slice(1) })
+          el.setAttribute('data-wely-bool', JSON.stringify(list))
           el.removeAttribute(attr.name)
         } else if (attr.name.startsWith('.')) {
-          el.setAttribute('data-wely-prop', `${index}:${attr.name.slice(1)}`)
+          const list = JSON.parse(el.getAttribute('data-wely-prop') ?? '[]')
+          list.push({ index, name: attr.name.slice(1) })
+          el.setAttribute('data-wely-prop', JSON.stringify(list))
           el.removeAttribute(attr.name)
         } else {
-          el.setAttribute('data-wely-attr', `${index}:${attr.name}`)
+          const list = JSON.parse(el.getAttribute('data-wely-attr') ?? '[]')
+          list.push({ index, name: attr.name })
+          el.setAttribute('data-wely-attr', JSON.stringify(list))
           el.removeAttribute(attr.name)
         }
         continue
@@ -192,29 +200,37 @@ function cloneParts(fragment: DocumentFragment): Part[] {
     const el = node as Element
     const eventMeta = el.getAttribute('data-wely-event')
     if (eventMeta) {
-      const [index, name] = eventMeta.split(':')
-      parts.push({ type: 'event', index: Number(index), element: el, name })
+      const list = JSON.parse(eventMeta) as Array<{ index: number; name: string }>
+      for (const item of list) {
+        parts.push({ type: 'event', index: item.index, element: el, name: item.name })
+      }
       el.removeAttribute('data-wely-event')
     }
 
     const boolMeta = el.getAttribute('data-wely-bool')
     if (boolMeta) {
-      const [index, name] = boolMeta.split(':')
-      parts.push({ type: 'boolean', index: Number(index), element: el, name })
+      const list = JSON.parse(boolMeta) as Array<{ index: number; name: string }>
+      for (const item of list) {
+        parts.push({ type: 'boolean', index: item.index, element: el, name: item.name })
+      }
       el.removeAttribute('data-wely-bool')
     }
 
     const propMeta = el.getAttribute('data-wely-prop')
     if (propMeta) {
-      const [index, name] = propMeta.split(':')
-      parts.push({ type: 'property', index: Number(index), element: el, name })
+      const list = JSON.parse(propMeta) as Array<{ index: number; name: string }>
+      for (const item of list) {
+        parts.push({ type: 'property', index: item.index, element: el, name: item.name })
+      }
       el.removeAttribute('data-wely-prop')
     }
 
     const attrMeta = el.getAttribute('data-wely-attr')
     if (attrMeta) {
-      const [index, name] = attrMeta.split(':')
-      parts.push({ type: 'attr', index: Number(index), element: el, name })
+      const list = JSON.parse(attrMeta) as Array<{ index: number; name: string }>
+      for (const item of list) {
+        parts.push({ type: 'attr', index: item.index, element: el, name: item.name })
+      }
       el.removeAttribute('data-wely-attr')
     }
 
@@ -274,8 +290,14 @@ function clearNodes(nodes: Node[]): void {
 function applyPart(part: Part, values: readonly unknown[]): void {
   if (part.type === 'attr') {
     const value = values[part.index]
-    if (value == null || value === false) part.element.removeAttribute(part.name)
-    else part.element.setAttribute(part.name, String(value))
+    if (value == null || value === false) {
+      part.element.removeAttribute(part.name)
+    } else {
+      const strVal = String(value)
+      if (part.element.getAttribute(part.name) !== strVal) {
+        part.element.setAttribute(part.name, strVal)
+      }
+    }
     return
   }
 

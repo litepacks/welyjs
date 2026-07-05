@@ -49,19 +49,66 @@
     .wp-shell { max-width: 960px; margin: 0 auto; padding: 2.75rem 1.5rem 3rem; }
     .wp-app { display: flex; flex-direction: column; gap: 1.75rem; }
     .wp-header-row {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+    }
+    .wp-brand {
+      justify-self: start;
     }
     .wp-brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; }
     .wp-brand h1 span { font-weight: 300; color: var(--wp-subtle); }
     [data-theme="dark"] .wp-brand h1 span { color: var(--wp-muted); }
-    .wp-nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; flex: 1; justify-content: center; }
+    .wp-nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; justify-self: center; }
     .wp-nav-link {
       font-size: 13px; padding: 6px 12px; border-radius: 8px; color: var(--wp-muted); text-decoration: none;
       transition: background .12s, color .12s;
     }
     .wp-nav-link:hover { background: var(--wp-surface2); color: var(--wp-fg); }
     .wp-nav-link.wp-nav-active { background: var(--wp-surface2); color: var(--wp-accent); font-weight: 600; }
+    .wp-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-self: end;
+    }
     .wp-theme-btn { flex-shrink: 0; }
+    .wp-menu-btn { display: none; flex-shrink: 0; }
+
+    @media (max-width: 640px) {
+      .wp-header-row {
+        grid-template-columns: 1fr auto;
+        gap: 12px 8px;
+      }
+      .wp-brand {
+        grid-column: 1;
+      }
+      .wp-header-actions {
+        grid-column: 2;
+      }
+      .wp-menu-btn {
+        display: inline-flex;
+      }
+      .wp-nav {
+        grid-column: 1 / span 2;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        border-top: 1px solid var(--wp-border);
+        padding-top: 12px;
+        margin-top: 4px;
+        justify-self: stretch;
+      }
+      .wp-nav.wp-nav-open {
+        display: flex;
+      }
+      .wp-nav-link {
+        text-align: center;
+        padding: 8px 12px;
+      }
+    }
     #wp-main { min-height: 200px; }
     .wp-view-home {
       display: flex;

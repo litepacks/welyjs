@@ -29,16 +29,16 @@ defineComponent({
     return html`
       <div class="inline-flex items-center gap-2">
         <button
-          class="w-8 h-8 rounded-md bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-700 font-semibold transition-colors cursor-pointer"
+          class="w-8 h-8 rounded-md bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-700 font-semibold transition-colors cursor-pointer dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200"
           @click=${ctx.actions.decrement}
         >-</button>
-        <span class="min-w-[3ch] text-center text-lg font-mono tabular-nums">${ctx.state.count}</span>
+        <span class="min-w-[3ch] text-center text-lg font-mono tabular-nums text-zinc-900 dark:text-zinc-100">${ctx.state.count}</span>
         <button
-          class="w-8 h-8 rounded-md bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-700 font-semibold transition-colors cursor-pointer"
+          class="w-8 h-8 rounded-md bg-zinc-200 hover:bg-zinc-300 active:bg-zinc-400 text-zinc-700 font-semibold transition-colors cursor-pointer dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200"
           @click=${ctx.actions.increment}
         >+</button>
         <button
-          class="px-3 h-8 rounded-md bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300 text-zinc-500 text-sm transition-colors cursor-pointer"
+          class="px-3 h-8 rounded-md bg-zinc-100 hover:bg-zinc-200 active:bg-zinc-300 text-zinc-500 text-sm transition-colors cursor-pointer dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300"
           @click=${ctx.actions.reset}
         >Reset</button>
       </div>
